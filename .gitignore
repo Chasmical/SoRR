@@ -396,3 +396,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Reset .gitignore for SoRR.Unity so that it uses its own
+!SoRR.Unity/**

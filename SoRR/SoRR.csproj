@@ -4,6 +4,7 @@
 
     <!-- Project Properties -->
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 
     <!-- Header -->
     <AssemblyName>SoRR</AssemblyName>
@@ -28,6 +29,17 @@
   <ItemGroup>
     <!-- This package is from https://nuget.bepinex.dev (see nuget.config in root) -->
     <PackageReference Include="UnityEngine.Modules" Version="6000.0.5" />
+    <PackageReference Include="Chasm.Utilities" Version="2.3.6" />
+    <PackageReference Include="Chasm.Collections" Version="2.2.7" />
   </ItemGroup>
+
+  <ItemGroup>
+    <CoreBinaries Include="$(ProjectDir)$(OutDir)*.dll" />
+    <CoreBinaries Remove="$(ProjectDir)$(OutDir)UnityEngine.*.*" />
+  </ItemGroup>
+
+  <Target Name="CopyDllToUnity" AfterTargets="Build" Condition="'$(TargetFramework)'=='netstandard2.1'">
+    <Copy SourceFiles="@(CoreBinaries)" DestinationFolder="$(SolutionDir)SoRR.Unity\Assets\Plugins" />
+  </Target>
 
 </Project>

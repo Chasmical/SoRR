@@ -1,0 +1,36 @@
+root = true
+
+# C# files
+[*.cs]
+
+#### Core EditorConfig Options ####
+
+# Indentation and spacing
+indent_size = 4
+indent_style = space
+tab_width = 4
+
+# New line preferences
+end_of_line = lf
+insert_final_newline = true
+
+# Spell checker exclusions
+spelling_exclusion_path = .\exclusion.dic
+
+
+
+#### Code Style Options ####
+
+# Disable 'Use expression body for method' message
+# - Having method bodies is more convenient when writing code with #if directives
+dotnet_diagnostic.IDE0022.severity = none
+
+# Disable 'Use collection expression for fluent' message
+# - I think ToArray() calls are more readable and easier to write than [..list]
+dotnet_diagnostic.IDE0305.severity = none
+
+# Disable 'Use primary constructor' message
+# - Having explicit constructors is more convenient, and better for version control
+dotnet_diagnostic.IDE0290.severity = none
+
+

@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+
+    <!-- Project Properties -->
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+
+    <!-- Header -->
+    <AssemblyName>SoRR</AssemblyName>
+    <PackageId>$(AssemblyName)</PackageId>
+    <Version>0.1.0</Version>
+
+    <!-- Title, Description, Tags -->
+    <Title>$(AssemblyName)</Title>
+    <Description>
+      Streets of Rogue: Reelected.
+    </Description>
+    <PackageTags>sorr streetsofrogue</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="SoRR.csproj.DotSettings" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- This package is from https://nuget.bepinex.dev (see nuget.config in root) -->
+    <PackageReference Include="UnityEngine.Modules" Version="6000.0.5" />
+  </ItemGroup>
+
+</Project>

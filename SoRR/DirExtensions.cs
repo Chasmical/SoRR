@@ -22,12 +22,12 @@ namespace SoRR
         [Pure] public static Dir24 ToDir24(this Dir8 dir)
             => (Dir24)((int)dir * 3);
 
-        [Pure] public static float ToDegrees(this Dir4 dir)
-            => (int)dir * (360f / 4);
-        [Pure] public static float ToDegrees(this Dir8 dir)
-            => (int)dir * (360f / 8);
-        [Pure] public static float ToDegrees(this Dir24 dir)
-            => (int)dir * (360f / 24);
+        [Pure] public static int ToDegrees(this Dir4 dir)
+            => (int)dir * 90;
+        [Pure] public static int ToDegrees(this Dir8 dir)
+            => (int)dir * 45;
+        [Pure] public static int ToDegrees(this Dir24 dir)
+            => (int)dir * 15;
 
         [Pure] public static float ToRadians(this Dir4 dir)
             => (int)dir * (Mathf.PI / 2);

@@ -1,18 +1,31 @@
 root = true
 
-# C# files
-[*.cs]
+#### Global EditorConfig ####
+[*]
 
-#### Core EditorConfig Options ####
+# New line preferences
+end_of_line = lf
+insert_final_newline = true
+
+
+
+#### EditorConfig for XML files ####
+[*.{xml,csproj,props,targets}]
+
+# Indentation and spacing
+indent_size = 2
+indent_style = space
+tab_width = 2
+
+
+
+#### EditorConfig for C# files ####
+[*.cs]
 
 # Indentation and spacing
 indent_size = 4
 indent_style = space
 tab_width = 4
-
-# New line preferences
-end_of_line = lf
-insert_final_newline = true
 
 # Spell checker exclusions
 spelling_exclusion_path = .\exclusion.dic

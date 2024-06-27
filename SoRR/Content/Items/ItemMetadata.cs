@@ -6,6 +6,7 @@ namespace SoRR
     public sealed class ItemMetadata
     {
         public Type Type { get; }
+        public string Name { get; }
         public int UID { get; }
 
         private static int idCounter = 1;
@@ -20,12 +21,15 @@ namespace SoRR
             return metadata;
         }
 
+        public Type DroppedItemType => typeof(SimpleDroppedItem);
+
         private ItemMetadata(Type type)
         {
             if (!typeof(Item).IsAssignableFrom(type))
                 throw new ArgumentException("The specified type is not an Item.", nameof(type));
 
             Type = type;
+            Name = type.FullName ?? type.Name;
             UID = idCounter++;
         }
 

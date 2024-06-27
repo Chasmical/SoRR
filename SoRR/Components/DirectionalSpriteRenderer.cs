@@ -26,7 +26,7 @@ namespace SoRR
             {
                 TDir dir = Unsafe.As<int, TDir>(ref i);
                 // TODO: Replace with a ResourceService
-                sprites[i] = Resources.Load<Sprite>(spriteName + GetDirectionSuffix(dir));
+                sprites[i] = Resources.Load<Sprite>("Sprites/" + spriteName + GetDirectionSuffix(dir));
             }
             return sprites;
         }

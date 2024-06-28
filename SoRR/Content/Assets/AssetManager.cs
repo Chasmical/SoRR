@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SoRR
@@ -11,7 +12,7 @@ namespace SoRR
 
         protected abstract object? LoadAsset(string path);
 
-        private object? GetAsset(string path)
+        private object? ResolveAsset(string path)
         {
             if (path.Contains('\\')) path = path.Replace('\\', '/');
             if (path.StartsWith('/')) path = path[1..];
@@ -21,19 +22,35 @@ namespace SoRR
 
             return asset;
         }
-        private object GetAssetNotNull(string path)
-            => GetAsset(path) ?? throw new AssetNotFoundException(this, path);
+        private T? GetAssetCore<T>(string path, bool throwOnError) where T : notnull
+        {
+            // Special case: Texture2D is loaded from a Sprite
+            if (typeof(T) == typeof(Texture2D))
+                return (T?)(object?)GetAssetCore<Sprite>(path, throwOnError)?.texture;
 
-        public Sprite LoadSprite(string path)
-            => (Sprite)GetAssetNotNull(path);
-        public Texture2D LoadTexture(string path)
-            => LoadSprite(path).texture;
-        public AudioClip LoadAudio(string path)
-            => (AudioClip)GetAssetNotNull(path);
-        public string LoadText(string path)
-            => (string)GetAssetNotNull(path);
-        public byte[] LoadBinary(string path)
-            => (byte[])GetAssetNotNull(path);
+            object? obj = ResolveAsset(path);
+
+            if (obj is null)
+            {
+                if (!throwOnError) return default;
+                throw new AssetNotFoundException(this, path);
+            }
+            if (obj is not T tAsset)
+            {
+                if (!throwOnError) return default;
+                throw new InvalidCastException($"Could not cast asset '{path}' of type {obj.GetType()} to {typeof(T)}.");
+            }
+
+            return tAsset;
+        }
+
+        public bool TryLoad<T>(string path, out T? asset) where T : notnull
+        {
+            if (default(T) is not null) throw new NotSupportedException("TryLoad does not support struct assets.");
+            return (asset = GetAssetCore<T>(path, false)) is not null;
+        }
+        public T Load<T>(string path) where T : notnull
+            => GetAssetCore<T>(path, true)!;
 
     }
 }

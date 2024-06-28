@@ -18,7 +18,7 @@ namespace SoRR
 
         public void Start()
         {
-            spriteRenderer.sprite = Resources.Load<Sprite>($"Sprites/Items/{Item.Metadata.Name}");
+            spriteRenderer.sprite = Assets.Load<Sprite>($"Sprites/Items/{Item.Metadata.Name}");
         }
 
     }

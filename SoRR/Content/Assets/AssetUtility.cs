@@ -60,9 +60,12 @@ namespace SoRR
             return ImageType.UNKNOWN;
         }
 
-        public static AssetType DetectAssetType(string pathOrExtension)
+        public static AssetType DetectAssetType(ReadOnlySpan<char> pathOrExtension)
         {
-            string extension = pathOrExtension.StartsWith('.') ? pathOrExtension : Path.GetExtension(pathOrExtension);
+            ReadOnlySpan<char> extension = pathOrExtension.IsEmpty || pathOrExtension[0] == '.'
+                ? pathOrExtension
+                : Path.GetExtension(pathOrExtension);
+
             return extension switch
             {
                 ".png" or ".jpg" or ".jpeg" => AssetType.IMAGE,

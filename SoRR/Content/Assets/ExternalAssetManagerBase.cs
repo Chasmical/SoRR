@@ -14,10 +14,10 @@ namespace SoRR
         protected override object? LoadAsset(string path)
         {
             IAssetLoadInfo? info = GetAssetInfo(path);
-            return info is null ? null : ResolveAsset(info, path);
+            return info is null ? null : CreateAssetFromStream(info, path);
         }
 
-        private static object ResolveAsset(IAssetLoadInfo info, string path)
+        private static object CreateAssetFromStream(IAssetLoadInfo info, string path)
         {
             byte[] assetData;
             using (Stream assetStream = info.OpenAsset())
@@ -27,7 +27,7 @@ namespace SoRR
             {
                 case AssetType.IMAGE:
                 {
-                    SpriteMetadata metadata = ResolveMetadata<SpriteMetadata>(info);
+                    SpriteMetadata metadata = CreateMetadataFromStream<SpriteMetadata>(info);
                     return AssetUtility.CreateSprite(assetData, metadata.region, metadata.ppu);
                 }
 
@@ -38,6 +38,7 @@ namespace SoRR
                     throw new NotImplementedException("Video asset loading not implemented yet.");
 
                 case AssetType.TEXT:
+                    // Note: do not use TextAsset, as it decodes the string from bytes every time it's accessed
                     return Encoding.UTF8.GetString(assetData);
 
                 case AssetType.BINARY:
@@ -47,7 +48,7 @@ namespace SoRR
                     throw new InvalidOperationException($"Asset '{path}' is of unknown type.");
             }
         }
-        private static T? ResolveMetadata<T>(IAssetLoadInfo info) where T : new()
+        private static T? CreateMetadataFromStream<T>(IAssetLoadInfo info) where T : new()
         {
             Stream? metadataStream = info.OpenMetadata();
             if (metadataStream is null) return new T();

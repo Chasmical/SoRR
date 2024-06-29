@@ -46,7 +46,7 @@ namespace SoRR
 
         public readonly record struct AssetInfo(string AssetPath, string? MetadataPath) : IAssetLoadInfo
         {
-            public AssetType Type => AssetUtility.DetectAssetType(AssetPath);
+            public AssetFormat Format => AssetUtility.DetectFormat(AssetPath);
             public Stream OpenAsset() => File.OpenRead(AssetPath);
             public Stream? OpenMetadata() => MetadataPath is null ? null : File.OpenRead(MetadataPath);
         }

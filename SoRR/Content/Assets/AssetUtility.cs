@@ -1,82 +1,13 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace SoRR
 {
-    public static class AssetUtility
+    public static partial class AssetUtility
     {
-        // Order of bytes in an int32 may differ depending on the machine's endianness
-        private static readonly int OggHeader = ByteSequenceToInt32(+'O', +'g', +'g', +'S');
-        private static readonly int RiffHeader = ByteSequenceToInt32(+'R', +'I', +'F', +'F');
-        private static readonly int WaveHeader = ByteSequenceToInt32(+'W', +'A', +'V', +'E');
-        private static readonly long PngHeader = ByteSequenceToInt64(0x89, +'P', +'N', +'G', +'\r', +'\n', 0x1A, +'\n');
-
-        private static int ByteSequenceToInt32(byte a, byte b, byte c, byte d)
-        {
-            Span<byte> bytes = stackalloc byte[4] { a, b, c, d };
-            return Unsafe.As<byte, int>(ref bytes[0]);
-        }
-        private static long ByteSequenceToInt64(byte a, byte b, byte c, byte d, byte e, byte f, byte g, byte h)
-        {
-            Span<byte> bytes = stackalloc byte[8] { a, b, c, d, e, f, g, h };
-            return Unsafe.As<byte, long>(ref bytes[0]);
-        }
-
-        public static AudioType DetectAudioFormat(ReadOnlySpan<byte> rawData)
-        {
-            // Need at least 12 bytes (WAV) to detect a format
-            if (rawData.Length < 12) return AudioType.UNKNOWN;
-
-            ref int int32 = ref Unsafe.As<byte, int>(ref Unsafe.AsRef(in rawData[0]));
-
-            if (int32 == OggHeader)
-                return AudioType.OGGVORBIS;
-
-            if (int32 == RiffHeader && Unsafe.Add(ref int32, 2) == WaveHeader)
-                return AudioType.WAV;
-
-            if (rawData[0] is +'I' && rawData[1] is +'D' && rawData[2] is +'3' || rawData[0] is 0xFF && (rawData[1] | 1) is 0xFB)
-                return AudioType.MPEG;
-
-            return AudioType.UNKNOWN;
-        }
-
-        public static ImageType DetectImageFormat(ReadOnlySpan<byte> rawData)
-        {
-            // Need at least 8 bytes (PNG) to detect a format
-            if (rawData.Length < 8) return ImageType.UNKNOWN;
-
-            ref long int64 = ref Unsafe.As<byte, long>(ref Unsafe.AsRef(in rawData[0]));
-
-            if (int64 == PngHeader)
-                return ImageType.PNG;
-
-            // 0xFF - marker, 0xD8 - Start of Image, 0xFF - marker
-            if (rawData[0] is 0xFF && rawData[1] is 0xD8 && rawData[2] is 0xFF)
-                return ImageType.JPEG;
-
-            return ImageType.UNKNOWN;
-        }
-
-        public static AssetType DetectAssetType(ReadOnlySpan<char> pathOrExtension)
-        {
-            ReadOnlySpan<char> extension = pathOrExtension.IsEmpty || pathOrExtension[0] == '.'
-                ? pathOrExtension
-                : Path.GetExtension(pathOrExtension);
-
-            return extension switch
-            {
-                ".png" or ".jpg" or ".jpeg" => AssetType.IMAGE,
-                ".ogg" or ".mp3" or ".wav" => AssetType.AUDIO,
-                ".mp4" => AssetType.VIDEO,
-                ".txt" or ".json" or ".xml" => AssetType.TEXT,
-                ".bin" or ".data" => AssetType.BINARY,
-                _ => AssetType.UNKNOWN,
-            };
-        }
-
         public static Sprite CreateSprite(byte[] rawData, Rect? region = null, float ppu = 64f)
         {
             if (rawData is null) throw new ArgumentNullException(nameof(rawData));
@@ -89,30 +20,45 @@ namespace SoRR
             return Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), ppu, 1u, SpriteMeshType.FullRect, Vector4.zero, false);
         }
 
-        public static AudioClip CreateAudioClip(byte[] rawData)
+        public static Task<AudioClip> CreateAudioClipAsync(string filePath)
+            => CreateAudioClipAsync(filePath, AudioType.UNKNOWN);
+        public static Task<AudioClip> CreateAudioClipAsync(byte[] rawData)
         {
             AudioType format = DetectAudioFormat(rawData);
-            throw new NotImplementedException("AudioClip loading not implemented yet.");
+            using (TempFile temp = RentTempFile(rawData))
+                return CreateAudioClipAsync(temp.Path, format);
+        }
+        public static Task<AudioClip> CreateAudioClipAsync(string filePath, AudioType format)
+        {
+            if (format == AudioType.UNKNOWN)
+                format = DetectAudioFormat(ReadFixedBytesFromFile(filePath, 12));
+
+            TaskCompletionSource<AudioClip> source = new();
+
+            UnityWebRequest uwr = UnityWebRequestMultimedia.GetAudioClip("file://" + filePath, format);
+            Awaitable.Awaiter awaiter = uwr.SendWebRequest().GetAwaiter();
+            awaiter.OnCompleted(() => source.SetResult(DownloadHandlerAudioClip.GetContent(uwr)));
+
+            return source.Task;
         }
 
-    }
-    public enum ImageType
-    {
-        // ReSharper disable InconsistentNaming
-        UNKNOWN,
-        PNG,
-        JPEG,
-        // ReSharper restore InconsistentNaming
-    }
-    public enum AssetType
-    {
-        // ReSharper disable InconsistentNaming
-        UNKNOWN,
-        IMAGE,
-        AUDIO,
-        VIDEO,
-        TEXT,
-        BINARY,
-        // ReSharper restore InconsistentNaming
+        private static byte[] ReadFixedBytesFromFile(string fileName, int count)
+        {
+            byte[] buffer = new byte[count];
+            using (BinaryReader reader = new BinaryReader(File.OpenRead(fileName)))
+                _ = reader.Read(buffer);
+            return buffer;
+        }
+        private static TempFile RentTempFile(byte[]? data = null)
+        {
+            string tempPath = Path.GetTempFileName();
+            if (data is not null) File.WriteAllBytes(tempPath, data);
+            return new TempFile(tempPath);
+        }
+
+        private sealed record TempFile(string Path) : IDisposable
+        {
+            public void Dispose() => File.Delete(Path);
+        }
     }
 }

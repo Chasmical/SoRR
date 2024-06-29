@@ -77,7 +77,7 @@ namespace SoRR
 
         public readonly record struct AssetInfo(ZipArchiveEntry Asset, ZipArchiveEntry? Metadata) : IAssetLoadInfo
         {
-            public AssetType Type => AssetUtility.DetectAssetType(Asset.FullName);
+            public AssetFormat Format => AssetUtility.DetectFormat(Asset.FullName);
             public Stream OpenAsset() => Asset.Open();
             public Stream? OpenMetadata() => Metadata?.Open();
         }

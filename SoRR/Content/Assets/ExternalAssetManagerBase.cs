@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using System.Text;
 using UnityEngine;
@@ -21,9 +20,9 @@ namespace SoRR
         {
             byte[] assetData;
             using (Stream assetStream = info.OpenAsset())
-                assetData = ReadAssetStream(assetStream);
+                assetData = assetStream.ToByteArray();
 
-            switch (info.Type)
+            switch (info.Format.ToType())
             {
                 case AssetType.IMAGE:
                 {
@@ -32,7 +31,7 @@ namespace SoRR
                 }
 
                 case AssetType.AUDIO:
-                    return AssetUtility.CreateAudioClip(assetData);
+                    return AssetUtility.CreateAudioClipAsync(assetData).Result;
 
                 case AssetType.VIDEO:
                     throw new NotImplementedException("Video asset loading not implemented yet.");
@@ -60,40 +59,6 @@ namespace SoRR
             }
         }
 
-        private static byte[] ReadAssetStream(Stream stream)
-        {
-            if (!TryGetStreamLength(stream, out int byteLength))
-            {
-                // If the asset's size can't be determined, use a MemoryStream
-                MemoryStream memory = new();
-                stream.CopyTo(memory);
-                return memory.ToArray();
-            }
-
-            // If the asset's size is known, rent and use a suitable buffer
-            using (IMemoryOwner<byte> buffer = MemoryPool<byte>.Shared.Rent(byteLength))
-            {
-                Memory<byte> memory = buffer.Memory;
-                if (stream.Read(memory.Span) != byteLength)
-                    throw new InvalidOperationException("Stream byte length mismatch.");
-                return memory.ToArray();
-            }
-        }
-        private static bool TryGetStreamLength(Stream stream, out int byteLength)
-        {
-            // Try to determine the stream's length in bytes
-            try
-            {
-                byteLength = checked((int)stream.Length);
-                return true;
-            }
-            catch (NotSupportedException)
-            {
-                byteLength = -1;
-                return false;
-            }
-        }
-
         public struct SpriteMetadata
         {
             public SpriteMetadata() { }
@@ -105,6 +70,6 @@ namespace SoRR
     {
         public Stream OpenAsset();
         public Stream? OpenMetadata();
-        public AssetType Type { get; }
+        public AssetFormat Format { get; }
     }
 }

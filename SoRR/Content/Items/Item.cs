@@ -1,10 +1,12 @@
 ﻿using System;
+using YamlDotNet.Core.Tokens;
 
 namespace SoRR
 {
     public abstract class Item
     {
-        public Inventory? Inventory { get; set; }
+        public Inventory? Inventory { get; private set; }
+
         public ItemMetadata Metadata { get; private set; } = null!;
 
         private int _count;
@@ -14,8 +16,19 @@ namespace SoRR
             set
             {
                 if (value < 0) throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(Count)} cannot be less than 0.");
+                if (value == 0) _ = Inventory?.RemoveItem(this);
                 _count = value;
             }
+        }
+
+        internal static void InternalSetInventory(Item item, Inventory? value)
+        {
+            if (item.Inventory is not null && value is not null)
+            {
+                if (!item.Inventory.RemoveItem(item))
+                    throw new InvalidOperationException($"Could not remove item {item} from its previous inventory.");
+            }
+            item.Inventory = value;
         }
 
         internal void InitialSetup(ItemMetadata metadata)
@@ -29,20 +42,20 @@ namespace SoRR
             return Game.CreateItem(Metadata, count);
         }
 
-        public virtual bool CanStackWith(Item other)
-            => Metadata == other.Metadata;
+        public bool CanStackWith(Item other)
+            => TransferStackTo(other, 0);
 
-        public virtual void AddStackFrom(Item other)
+        public virtual bool TransferStackTo(Item other, int count)
         {
-            Count += other.Count;
-            other.Count = 0;
+            if (Metadata != other.Metadata) return false;
+            Count -= count;
+            other.Count += count;
+            return true;
         }
 
     }
     public sealed class LampOfCubey : Item
     {
         protected override Item? SplitStackOff(int count) => null;
-        public override bool CanStackWith(Item other) => false;
-        public override void AddStackFrom(Item other) { }
     }
 }

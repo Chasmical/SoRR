@@ -1,26 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 
 namespace SoRR
 {
     public abstract class Inventory
     {
         public abstract IEnumerable<Item> GetItems();
-        
-        public abstract bool TryAddItem(Item newItem);
 
-        public abstract bool TryRemoveItem(Item item);
+        [MustUseReturnValue]
+        public abstract bool AddItem(Item newItem);
+
+        [MustUseReturnValue]
+        public abstract bool ReplaceItem(Item? oldItem, Item? newItem);
+
+        public abstract bool ContainsItem(Item? item);
+
+        [MustUseReturnValue]
+        public bool RemoveItem(Item? item)
+            => item is not null && ReplaceItem(item, null);
+
+        protected void ExchangeItemAndSetInventory(ref Item? storedItem, Item? newItem)
+        {
+            if (storedItem == newItem) return;
+            if (storedItem is not null) Item.InternalSetInventory(storedItem, null);
+            storedItem = newItem;
+            if (storedItem is not null) Item.InternalSetInventory(storedItem, this);
+        }
+
+
 
         public IEnumerable<TItem> GetItems<TItem>()
             => GetItems().OfType<TItem>();
         public TItem? GetItem<TItem>()
             => GetItems<TItem>().FirstOrDefault();
-
-        public IEnumerable<Item> GetItems(Type itemType)
-            => GetItems().Where(item => item.Metadata.Type == itemType);
-        public Item? GetItem(Type itemType)
-            => GetItems(itemType).FirstOrDefault();
 
         public bool HasItem<TItem>(int minCount = 1)
             => HasItem<TItem>(minCount, true);

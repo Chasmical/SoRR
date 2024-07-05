@@ -40,7 +40,7 @@ namespace SoRR
 
         public static void Inject(object instance)
             => Inject(instance, GetInjectionData(instance.GetType()));
-        public static void Inject(object instance, StaticInjectionData injectionData)
+        private static void Inject(object instance, StaticInjectionData injectionData)
         {
             foreach (StaticInjectionInfo injection in injectionData.Injections)
             {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Chasm.Collections;
 
 namespace SoRR
 {
@@ -52,6 +53,13 @@ namespace SoRR
         {
             List<StaticInjectionInfo> list = [];
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+            Type? baseType = type.BaseType;
+            if (Array.IndexOf(PrimitiveTypes, baseType) == -1)
+            {
+                StaticInjectionData baseData = Injector.GetInjectionData(baseType!);
+                list.AddRange(baseData.injections);
+            }
 
             foreach (FieldInfo field in type.GetFields(flags))
             {

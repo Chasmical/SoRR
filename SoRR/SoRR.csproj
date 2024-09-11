@@ -29,11 +29,19 @@
     <PackageReference Include="UnityEngine.Modules" Version="6000.0.5" />
     <PackageReference Include="Chasm.Utilities" Version="2.3.6" />
     <PackageReference Include="Chasm.Collections" Version="2.2.7" />
+    <PackageReference Include="Chasm.Compatibility" Version="2.2.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     <PackageReference Include="YamlDotNet" Version="15.3.0" />
 
     <UnityPluginBinaries Include="$(ProjectDir)$(OutDir)*.dll" />
     <UnityPluginBinaries Remove="$(ProjectDir)$(OutDir)UnityEngine.*.*" />
+    <UnityPluginBinaries Remove="$(ProjectDir)$(OutDir)Unity.*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Unity.Netcode.Components" HintPath="..\ref\Unity.Netcode.Components.dll" />
+    <Reference Include="Unity.Netcode.Runtime" HintPath="..\ref\Unity.Netcode.Runtime.dll" />
+    <Reference Include="Unity.Multiplayer.Playmode" HintPath="..\ref\Unity.Multiplayer.Playmode.dll" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -42,6 +50,7 @@
 
   <Target Name="CopyDllToUnity" AfterTargets="Build" Condition="'$(TargetFramework)'=='netstandard2.1'">
     <Copy SourceFiles="@(UnityPluginBinaries)" DestinationFolder="$(SolutionDir)SoRR.Unity\Assets\Plugins" />
+    <Message Importance="High" Text="SoRR plugin binaries copied to Assets/Plugins" />
   </Target>
 
 </Project>

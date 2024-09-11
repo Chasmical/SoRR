@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 
 namespace SoRR
 {
-    public abstract class Inventory
+    public abstract class Inventory : Injectable
     {
         public abstract IEnumerable<Item> GetItems();
 

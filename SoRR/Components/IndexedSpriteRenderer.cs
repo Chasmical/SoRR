@@ -21,6 +21,12 @@ namespace SoRR
             set => SetSpriteIndex(value);
         }
 
+        public Color SpriteColor
+        {
+            get => renderer.color;
+            set => renderer.color = value;
+        }
+
         public void SetSprite(string? newSpriteName)
             => SetSprite(newSpriteName, _spriteIndex);
         public void SetSprite(string? newSpriteName, int newIndex)

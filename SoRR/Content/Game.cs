@@ -31,5 +31,18 @@ namespace SoRR
             return dropped;
         }
 
+        public static TAgent SpawnAgent<TAgent>(Vector2 position) where TAgent : Agent
+            => (TAgent)SpawnAgent(AgentMetadata.Get<TAgent>(), position);
+        public static Agent SpawnAgent(AgentMetadata metadata, Vector2 position)
+        {
+            GameObject go = new GameObject("Agent: " + metadata.Type.Name);
+            go.transform.position = position;
+
+            Agent agent = (Agent)go.AddComponent(metadata.Type);
+            agent.InitialSetup(metadata);
+
+            return agent;
+        }
+
     }
 }

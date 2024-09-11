@@ -38,12 +38,25 @@ spelling_exclusion_path = .\exclusion.dic
 # - Having method bodies is more convenient when writing code with #if directives
 dotnet_diagnostic.IDE0022.severity = none
 
-# Disable 'Use collection expression for fluent' message
-# - I think ToArray() calls are more readable and easier to write than [..list]
-dotnet_diagnostic.IDE0305.severity = none
+# Disable 'Use simple using statement' message
+dotnet_diagnostic.IDE0063.severity = none
+
+# Disable 'Place using directives outside namespace'
+# - Sometimes it's just shorter and more concise to use "using static" inside namespaces
+dotnet_diagnostic.IDE0065.severity = none
+
+# Disable 'Simplify new expression' message
+dotnet_diagnostic.IDE0090.severity = none
+
+# Disable 'Namespace does not match folder structure' message
+dotnet_diagnostic.IDE0130.severity = none
 
 # Disable 'Use primary constructor' message
 # - Having explicit constructors is more convenient, and better for version control
 dotnet_diagnostic.IDE0290.severity = none
+
+# Disable 'Use collection expression for fluent' message
+# - I think ToArray() calls are more readable and easier to write than [..list]
+dotnet_diagnostic.IDE0305.severity = none
 
 

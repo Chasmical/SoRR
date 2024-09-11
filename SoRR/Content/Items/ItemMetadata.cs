@@ -21,12 +21,12 @@ namespace SoRR
             return metadata;
         }
 
-        public Type DroppedItemType => typeof(SimpleDroppedItem);
+        public Type DroppedItemType => typeof(DroppedItem);
 
         private ItemMetadata(Type type)
         {
             if (!typeof(Item).IsAssignableFrom(type))
-                throw new ArgumentException("The specified type is not an Item.", nameof(type));
+                throw new ArgumentException($"The specified type is not an {nameof(Item)}.", nameof(type));
 
             Type = type;
             Name = type.FullName ?? type.Name;

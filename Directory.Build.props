@@ -1,0 +1,33 @@
+<Project>
+
+  <PropertyGroup>
+
+    <!-- Project Properties -->
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <Authors>Chasmical</Authors>
+    <Company>$(Authors)</Company>
+    <Copyright>Copyright © Chasmical 2022-2024</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+    <!-- Targets -->
+    <TargetFrameworks>
+      netstandard2.1;
+    </TargetFrameworks>
+
+    <!-- Repository -->
+    <PackageProjectUrl>https://github.com/Chasmical/SoRR</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Chasmical/SoRR.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>main</RepositoryBranch>
+
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <NoWarn>$(NoWarn),1591</NoWarn> <!-- Suppress the 'Missing XML Documentation' warning -->
+  </PropertyGroup>
+
+</Project>

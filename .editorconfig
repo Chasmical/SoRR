@@ -1,0 +1,57 @@
+root = true
+
+# C# files
+[*.cs]
+
+#### Core EditorConfig Options ####
+
+# Indentation and spacing
+indent_size = 4
+indent_style = space
+tab_width = 4
+
+# New line preferences
+end_of_line = lf
+insert_final_newline = true
+
+# Spell checker exclusions
+spelling_exclusion_path = .\exclusion.dic
+
+
+
+#### Code Style Options ####
+
+# Disable 'Use explicit type instead of 'var'' message
+# - specifying explicit types for tuples is way too redundant
+dotnet_diagnostic.IDE0008.severity = none
+
+# Disable 'Use expression body for constructor/method' message
+# - Having method bodies is more convenient when writing code with #if directives
+dotnet_diagnostic.IDE0021.severity = none
+dotnet_diagnostic.IDE0022.severity = none
+
+# Disable 'Slice can be simplified' message
+# - Not all target frameworks support ranges, and using the range syntax doesn't have any significant benefits
+dotnet_diagnostic.IDE0057.severity = none
+
+# Disable 'Place using directives outside namespace'
+# - Sometimes it's just shorter and more concise to use "using static" inside namespaces
+dotnet_diagnostic.IDE0065.severity = none
+
+# Disable ''new' expression can be simplified' message
+dotnet_diagnostic.IDE0090.severity = none
+
+# Disable 'Namespace does not match folder structure' message
+dotnet_diagnostic.IDE0130.severity = none
+
+# Disable 'Use primary constructor' message
+# - Having explicit constructors is more convenient, and better for version control
+dotnet_diagnostic.IDE0290.severity = none
+
+# Disable 'Use collection expression for fluent' message
+# - I think ToArray() calls are more readable than [..list]
+dotnet_diagnostic.IDE0305.severity = none
+
+# Disable 'Use ArgumentNullException.ThrowIfNull' message
+# - It was only introduced in .NET 6, and I want to support older targets
+dotnet_diagnostic.CA1510.severity = none

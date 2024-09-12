@@ -32,6 +32,7 @@
     <PackageReference Include="Chasm.Collections" Version="2.4.1" />
     <PackageReference Include="Chasm.Compatibility" Version="2.4.1" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
     <UnityPluginBinaries Include="$(ProjectDir)$(OutDir)*.dll" />
     <UnityPluginBinaries Remove="$(ProjectDir)$(OutDir)UnityEngine.*.*" />

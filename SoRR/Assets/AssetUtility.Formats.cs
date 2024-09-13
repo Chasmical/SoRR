@@ -9,10 +9,18 @@ namespace SoRR
     public static partial class AssetUtility
     {
         // Order of bytes in an int32/int64 may differ depending on the machine's endianness
+
         private static readonly int OggHeader = ByteSequenceToInt32(+'O', +'g', +'g', +'S');
         private static readonly int RiffHeader = ByteSequenceToInt32(+'R', +'I', +'F', +'F');
         private static readonly int WaveHeader = ByteSequenceToInt32(+'W', +'A', +'V', +'E');
         private static readonly long PngHeader = ByteSequenceToInt64(0x89, +'P', +'N', +'G', +'\r', +'\n', 0x1A, +'\n');
+
+        private static readonly int FirstThreeBytesMask = ByteSequenceToInt32(255, 255, 255, 0);
+
+        // ID3 header used for metadata in MPEG files (fourth byte is irrelevant)
+        private static readonly int Id3Header = ByteSequenceToInt32(+'I', +'D', +'3', 0);
+        // 0xFF - marker, 0xD8 - Start of Image, 0xFF - marker (fourth byte is irrelevant)
+        private static readonly int JpegHeader = ByteSequenceToInt32(0xFF, 0xD8, 0xFF, 0);
 
         [Pure] private static int ByteSequenceToInt32(params Span<byte> span)
         {
@@ -40,7 +48,10 @@ namespace SoRR
             if (int32 == RiffHeader && Unsafe.Add(ref int32, 2) == WaveHeader)
                 return AudioType.WAV;
 
-            if (rawData[0] is +'I' && rawData[1] is +'D' && rawData[2] is +'3' || rawData[0] is 0xFF && (rawData[1] | 1) is 0xFB)
+            if ((int32 & FirstThreeBytesMask) == Id3Header)
+                return AudioType.MPEG;
+
+            if (rawData[0] == 0xFF && (rawData[1] | 1) == 0xFB)
                 return AudioType.MPEG;
 
             return AudioType.UNKNOWN;
@@ -55,8 +66,9 @@ namespace SoRR
             if (int64 == PngHeader)
                 return ImageType.PNG;
 
-            // 0xFF - marker, 0xD8 - Start of Image, 0xFF - marker
-            if (rawData[0] is 0xFF && rawData[1] is 0xD8 && rawData[2] is 0xFF)
+            ref int int32 = ref Unsafe.As<byte, int>(ref Unsafe.AsRef(in rawData[0]));
+
+            if ((int32 & FirstThreeBytesMask) == JpegHeader)
                 return ImageType.JPEG;
 
             return ImageType.UNKNOWN;

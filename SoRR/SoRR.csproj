@@ -26,12 +26,11 @@
     <None Remove="SoRR.csproj.DotSettings" />
 
     <!-- This package is from https://nuget.bepinex.dev (see nuget.config in root) -->
-    <PackageReference Include="UnityEngine.Modules" Version="6000.0.5" />
+    <PackageReference Include="UnityEngine.Modules" Version="6000.0.19" PrivateAssets="all" />
     <PackageReference Include="Chasm.Utilities" Version="2.5.1" />
     <PackageReference Include="Chasm.Formatting" Version="2.3.5" />
-    <PackageReference Include="Chasm.Collections" Version="2.4.1" />
-    <PackageReference Include="Chasm.Compatibility" Version="2.4.1" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+    <PackageReference Include="Chasm.Collections" Version="2.4.2" />
+    <PackageReference Include="Chasm.Compatibility" Version="2.6.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
     <UnityPluginBinaries Include="$(ProjectDir)$(OutDir)*.dll" />

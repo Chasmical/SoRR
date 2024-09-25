@@ -6,64 +6,49 @@ namespace SoRR
 {
     public static class Assets
     {
-        // TODO: when asset managers can use spans to index assets, replace this with a string-keyed dictionary too
-        // TODO: then, ArrayEx class can be removed, since it's not used anywhere else
-        private static ManagerEntry[] _entries = [];
-
-        private readonly struct ManagerEntry(string prefix, AssetManager manager)
-        {
-            public string Prefix { get; } = prefix;
-            public AssetManager Manager { get; } = manager;
-        }
+        private static readonly StringKeyedDictionary<AssetManager> managers = new();
 
         public static bool TryLoad<T>(string query, [NotNullWhen(true)] out T? asset)
+            => TryLoad(query.AsSpan(), out asset);
+        public static T Load<T>(string query)
+            => Load<T>(query.AsSpan());
+        public static T? LoadOrDefault<T>(string query)
+            => LoadOrDefault<T>(query.AsSpan());
+
+        public static bool TryLoad<T>(ReadOnlySpan<char> query, [NotNullWhen(true)] out T? asset)
         {
             AssetManager? manager = FindManager(query, out ReadOnlySpan<char> path);
-            return manager is null ? Util.Fail(out asset) : manager.TryLoad(path.ToString(), out asset);
+            return manager is null ? Util.Fail(out asset) : manager.TryLoad(path, out asset);
         }
-        public static T Load<T>(string query)
+        public static T Load<T>(ReadOnlySpan<char> query)
         {
             AssetManager? manager = FindManager(query, out ReadOnlySpan<char> path);
             if (manager is null) throw new ArgumentException("Invalid asset manager prefix.", nameof(query));
-            return manager.Load<T>(path.ToString());
+            return manager.Load<T>(path);
         }
-        public static T? LoadOrDefault<T>(string query)
+        public static T? LoadOrDefault<T>(ReadOnlySpan<char> query)
         {
             AssetManager? manager = FindManager(query, out ReadOnlySpan<char> path);
-            return manager is null ? default : manager.LoadOrDefault<T>(path.ToString());
+            return manager is null ? default : manager.LoadOrDefault<T>(path);
         }
 
         public static void RegisterAssetManager(string prefix, AssetManager manager)
         {
             if (manager.registeredPrefix is not null) throw new ArgumentException();
             manager.registeredPrefix = prefix;
-            ArrayEx.AddItem(ref _entries, new ManagerEntry(prefix, manager));
+            managers.Add(prefix, manager);
         }
         public static bool UnRegisterAssetManager(string prefix, [NotNullWhen(true)] out AssetManager? manager)
         {
-            int index = Array.FindIndex(_entries, e => e.Prefix == prefix);
-            if (index == -1)
-            {
-                manager = null;
-                return false;
-            }
-            manager = _entries[index].Manager;
-            ArrayEx.RemoveRange(ref _entries, index, 1);
-            manager.registeredPrefix = null;
-            return true;
+            bool res = managers.Remove(prefix, out manager);
+            if (res) manager!.registeredPrefix = null;
+            return res;
         }
 
-        private static AssetManager? FindManager(string query, out ReadOnlySpan<char> path)
+        private static AssetManager? FindManager(ReadOnlySpan<char> query, out ReadOnlySpan<char> path)
         {
             SplitPath(query, out ReadOnlySpan<char> prefix, out path);
-
-            ManagerEntry[] entries = _entries;
-            for (int i = 0; i < entries.Length; i++)
-            {
-                ManagerEntry entry = entries[i];
-                if (prefix.SequenceEqual(entry.Prefix)) return entry.Manager;
-            }
-            return null;
+            return managers.TryGetValue(prefix, out AssetManager? manager) ? manager : null;
         }
 
         private static void SplitPath(ReadOnlySpan<char> query, out ReadOnlySpan<char> prefix, out ReadOnlySpan<char> path)

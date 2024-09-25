@@ -44,6 +44,9 @@ dotnet_diagnostic.IDE0090.severity = none
 # Disable 'Namespace does not match folder structure' message
 dotnet_diagnostic.IDE0130.severity = none
 
+# Disable 'Null check can be simplified' message
+dotnet_diagnostic.IDE0270.severity = none
+
 # Disable 'Use primary constructor' message
 # - Having explicit constructors is more convenient, and better for version control
 dotnet_diagnostic.IDE0290.severity = none

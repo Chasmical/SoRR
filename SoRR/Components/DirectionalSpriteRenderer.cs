@@ -26,7 +26,7 @@ namespace SoRR
             for (int i = 0; i < count; i++)
             {
                 TDir direction = Unsafe.As<int, TDir>(ref i);
-                sprites[i] = Assets.Load<Sprite>(spriteName + GetDirectionSuffix(direction));
+                sprites[i] = Assets.LoadOrDefault<Sprite>(spriteName + GetDirectionSuffix(direction));
             }
             return sprites;
         }

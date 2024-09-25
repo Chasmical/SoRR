@@ -8,9 +8,9 @@ namespace SoRR
 {
     public abstract class ExternalAssetManagerBase : AssetManager
     {
-        protected abstract IAssetLoadInfo? GetAssetInfo(string path);
+        protected abstract IAssetLoadInfo? GetAssetInfo(string assetPath);
 
-        protected override object? LoadAsset(string path)
+        protected override object? LoadAssetHandler(string path)
         {
             IAssetLoadInfo? info = GetAssetInfo(path);
             return info is null ? null : CreateAssetFromStream(info, path);

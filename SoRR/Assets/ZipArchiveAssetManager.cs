@@ -36,16 +36,18 @@ namespace SoRR
             foreach (ZipArchiveEntry entry in Archive.Entries)
             {
                 string assetPath = entry.FullName;
-                int extensionLength = Path.GetExtension(assetPath.AsSpan()).Length;
-                string declaredName = assetPath[..^extensionLength];
+                ReadOnlySpan<char> assetExtension = Path.GetExtension(assetPath.AsSpan());
+                if (assetExtension is ".meta") continue;
+
+                string declaredName = assetPath[..^assetExtension.Length];
 
                 if (dict.TryGetValue(declaredName, out AssetInfo prev))
                 {
-                    // TODO: Resolve conflicting names (probably metadata got loaded before the asset, or vice versa)
+                    // TODO: log a warning, if there's more than one asset path
                     continue;
                 }
 
-                string metadataPath = Path.ChangeExtension(assetPath, ".json");
+                string metadataPath = Path.ChangeExtension(assetPath, ".meta");
                 ZipArchiveEntry? metadataEntry = Archive.GetEntry(metadataPath);
 
                 dict[declaredName] = new AssetInfo(entry, metadataEntry);
@@ -54,15 +56,14 @@ namespace SoRR
             lookupDict = dict;
         }
 
-        protected override IAssetLoadInfo? GetAssetInfo(string path)
+        protected override IAssetLoadInfo? GetAssetInfo(string assetPath)
         {
             if (lookupDict is null) InitializeLookup();
-            return lookupDict.TryGetValue(path, out AssetInfo asset) ? asset : null;
+            return lookupDict.TryGetValue(assetPath, out AssetInfo asset) ? asset : null;
         }
 
         public readonly record struct AssetInfo(ZipArchiveEntry Asset, ZipArchiveEntry? Metadata) : IAssetLoadInfo
         {
-            // Note: when exposing a MemoryStream with byte[], make sure to make it exposable/publiclyVisible
             public AssetFormat Format => AssetUtility.DetectFormat(Asset.FullName);
             [MustDisposeResource]
             public Stream OpenAsset() => Asset.Open();

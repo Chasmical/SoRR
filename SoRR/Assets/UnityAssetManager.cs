@@ -14,7 +14,7 @@ namespace SoRR
             Resources = resourcesApi;
         }
 
-        protected override object? LoadAsset(string path)
+        protected override object? LoadAssetHandler(string path)
         {
             UnityEngine.Object? asset = Resources.Load(path, typeof(UnityEngine.Object));
             if (!asset) return null;

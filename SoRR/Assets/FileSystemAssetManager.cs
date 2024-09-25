@@ -1,36 +1,77 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using JetBrains.Annotations;
 
 namespace SoRR
 {
-    public sealed class FileSystemAssetManager : ExternalAssetManagerBase
+    public sealed class FileSystemAssetManager : ExternalAssetManagerBase, IDisposable
     {
         public string DirectoryPath { get; }
         public override string DisplayName => DirectoryPath;
+
+        private FileSystemWatcher? watcher;
 
         public FileSystemAssetManager(string directoryPath)
         {
             if (directoryPath is null) throw new ArgumentNullException(nameof(directoryPath));
             DirectoryPath = Path.GetFullPath(directoryPath);
 
-            // TODO: set up a FileSystemWatcher monitoring the directory's contents
+            watcher = new FileSystemWatcher(directoryPath);
+            watcher.Changed += HandleChangedFile;
+            watcher.Created += HandleChangedFile;
+            watcher.Deleted += HandleChangedFile;
+            watcher.Renamed += HandleRenamedFile;
+            watcher.EnableRaisingEvents = true;
         }
 
-        protected override IAssetLoadInfo? GetAssetInfo(string path)
+        public void Dispose()
         {
-            // TODO: find the files matching the specified path
+            if (watcher is null) return;
+            watcher!.EnableRaisingEvents = false;
+            watcher.Dispose();
+            watcher = null;
+        }
 
-            // TODO: determine which one is the main asset, and which one is the metadata
+        private void HandleChangedFile(object _, FileSystemEventArgs e)
+        {
+            RefreshPath(e.FullPath);
+        }
+        private void HandleRenamedFile(object _, RenamedEventArgs e)
+        {
+            RefreshPath(e.OldFullPath);
+            RefreshPath(e.FullPath);
+        }
+        private void RefreshPath(string fullPath)
+        {
+            string pathWithoutExtension = Path.GetFileNameWithoutExtension(fullPath);
+            string assetPath = Path.GetRelativePath(DirectoryPath, pathWithoutExtension).Replace('\\', '/');
+            RefreshAsset(assetPath);
+        }
 
-            // TODO: if the main asset could not be found, return null
+        protected override IAssetLoadInfo? GetAssetInfo(string assetPath)
+        {
+            List<string> assetPaths = [];
+            string? metadataPath = null;
 
-            throw new NotImplementedException();
+            foreach (string filePath in FileUtility.SearchFiles(DirectoryPath, assetPath))
+            {
+                ReadOnlySpan<char> extension = Path.GetExtension(filePath.AsSpan());
+
+                if (extension is ".meta")
+                    metadataPath = filePath;
+                else
+                    assetPaths.Add(filePath);
+            }
+
+            if (assetPaths.Count == 0) return null;
+            // TODO: log a warning, if there's more than one asset path
+
+            return new AssetInfo(assetPaths[0], metadataPath);
         }
 
         public readonly record struct AssetInfo(string AssetPath, string? MetadataPath) : IAssetLoadInfo
         {
-            // Note: when exposing a MemoryStream with byte[], make sure to make it exposable/publiclyVisible
             public AssetFormat Format => AssetUtility.DetectFormat(AssetPath);
             [MustDisposeResource]
             public Stream OpenAsset() => File.OpenRead(AssetPath);

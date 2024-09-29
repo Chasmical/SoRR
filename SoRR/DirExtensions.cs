@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -26,12 +27,14 @@ namespace SoRR
         [Pure] private static float ToRadiansCore<TDir>(TDir dir)
             => Unsafe.As<TDir, int>(ref dir) * (2f * Mathf.PI / Direction.CountOf<TDir>());
 
-        private static readonly string[] directions8 = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+        private static readonly string[] directions24 = Enum.GetNames(typeof(Dir24));
 
         [Pure] public static string ToLetters(this Dir4 dir)
-            => directions8[(int)dir * 2];
+            => dir.ToDir24().ToLetters();
         [Pure] public static string ToLetters(this Dir8 dir)
-            => directions8[(int)dir];
+            => dir.ToDir24().ToLetters();
+        [Pure] public static string ToLetters(this Dir24 dir)
+            => directions24[(int)dir];
 
         [Pure] public static Dir4 Rotate(this Dir4 dir, int delta)
             => Direction.Normalize(RotateCore(dir, delta));

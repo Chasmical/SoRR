@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using Chasm.Utilities;
 
 namespace SoRR
 {
@@ -8,47 +7,49 @@ namespace SoRR
     {
         private static readonly StringKeyedDictionary<AssetManager> managers = new();
 
-        public static bool TryLoad<T>(string query, [NotNullWhen(true)] out T? asset)
-            => TryLoad(query.AsSpan(), out asset);
-        public static T Load<T>(string query)
-            => Load<T>(query.AsSpan());
-        public static T? LoadOrDefault<T>(string query)
-            => LoadOrDefault<T>(query.AsSpan());
-
-        public static bool TryLoad<T>(ReadOnlySpan<char> query, [NotNullWhen(true)] out T? asset)
+        public static void RegisterAssetManager(AssetManager manager, string prefix)
         {
-            AssetManager? manager = FindManager(query, out ReadOnlySpan<char> path);
-            return manager is null ? Util.Fail(out asset) : manager.TryLoad(path, out asset);
-        }
-        public static T Load<T>(ReadOnlySpan<char> query)
-        {
-            AssetManager? manager = FindManager(query, out ReadOnlySpan<char> path);
-            if (manager is null) throw new ArgumentException("Invalid asset manager prefix.", nameof(query));
-            return manager.Load<T>(path);
-        }
-        public static T? LoadOrDefault<T>(ReadOnlySpan<char> query)
-        {
-            AssetManager? manager = FindManager(query, out ReadOnlySpan<char> path);
-            return manager is null ? default : manager.LoadOrDefault<T>(path);
-        }
-
-        public static void RegisterAssetManager(string prefix, AssetManager manager)
-        {
-            if (manager.registeredPrefix is not null) throw new ArgumentException();
-            manager.registeredPrefix = prefix;
             managers.Add(prefix, manager);
+            manager.registeredPrefix = prefix;
         }
-        public static bool UnRegisterAssetManager(string prefix, [NotNullWhen(true)] out AssetManager? manager)
+        public static bool UnRegisterAssetManager(AssetManager manager)
         {
-            bool res = managers.Remove(prefix, out manager);
-            if (res) manager!.registeredPrefix = null;
-            return res;
+            if (manager.registeredPrefix is not null && managers.Remove(manager.registeredPrefix))
+            {
+                manager.registeredPrefix = null;
+                return true;
+            }
+            return false;
         }
 
-        private static AssetManager? FindManager(ReadOnlySpan<char> query, out ReadOnlySpan<char> path)
+        public static T? LoadOrDefault<T>(string fullPath)
+            => LoadOrDefault<T>(fullPath.AsSpan());
+        public static T? Load<T>(string fullPath)
+            => Load<T>(fullPath.AsSpan());
+        public static bool TryLoad<T>(string fullPath, [NotNullWhen(true)] out T? asset)
+            => TryLoad(fullPath.AsSpan(), out asset);
+
+        public static T? LoadOrDefault<T>(ReadOnlySpan<char> fullPath)
         {
-            SplitPath(query, out ReadOnlySpan<char> prefix, out path);
-            return managers.TryGetValue(prefix, out AssetManager? manager) ? manager : null;
+            SplitPath(fullPath, out var prefix, out var relativePath);
+            return managers.TryGetValue(prefix, out AssetManager? manager)
+                ? manager.LoadOrDefault<T>(relativePath)
+                : default;
+        }
+        public static T? Load<T>(ReadOnlySpan<char> fullPath)
+        {
+            SplitPath(fullPath, out var prefix, out var relativePath);
+            return managers.TryGetValue(prefix, out AssetManager? manager)
+                ? manager.Load<T>(relativePath)
+                : throw new ArgumentException("Could not find specified asset manager prefix.", nameof(fullPath));
+        }
+        public static bool TryLoad<T>(ReadOnlySpan<char> fullPath, [NotNullWhen(true)] out T? asset)
+        {
+            SplitPath(fullPath, out var prefix, out var relativePath);
+            if (managers.TryGetValue(prefix, out AssetManager? manager))
+                return manager.TryLoad(relativePath, out asset);
+            asset = default;
+            return false;
         }
 
         private static void SplitPath(ReadOnlySpan<char> query, out ReadOnlySpan<char> prefix, out ReadOnlySpan<char> path)

@@ -4,40 +4,38 @@ using UnityEngine;
 
 namespace SoRR
 {
-    public abstract class AssetManager
+    public abstract class AssetManager : IDisposable
     {
         internal string? registeredPrefix;
-        protected readonly StringKeyedDictionary<object> cache = new();
+        protected StringKeyedDictionary<object> cache = new();
+        protected bool disposed;
 
         public abstract string DisplayName { get; }
 
-        public bool TryLoad<T>(string path, [NotNullWhen(true)] out T? asset)
+        public void Dispose()
         {
-            if (default(T) is not null) throw new NotSupportedException("TryLoad does not support struct assets.");
-            return (asset = TryLoadAssetCore<T>(path, path, false)) is not null;
-        }
-        public T Load<T>(string path)
-            => TryLoadAssetCore<T>(path, path, true)!;
-        public T? LoadOrDefault<T>(string path)
-            => TryLoadAssetCore<T>(path, path, false);
+            if (disposed) return;
+            disposed = true;
 
-        public bool TryLoad<T>(ReadOnlySpan<char> path, [NotNullWhen(true)] out T? asset)
+            Dispose(true);
+            cache = null!;
+
+            GC.SuppressFinalize(this);
+        }
+        protected virtual void Dispose(bool disposing)
         {
-            if (default(T) is not null) throw new NotSupportedException("TryLoad does not support struct assets.");
-            return (asset = TryLoadAssetCore<T>(path, null, false)) is not null;
+            Assets.UnRegisterAssetManager(this);
         }
-        public T Load<T>(ReadOnlySpan<char> path)
-            => TryLoadAssetCore<T>(path, null, true)!;
-        public T? LoadOrDefault<T>(ReadOnlySpan<char> path)
-            => TryLoadAssetCore<T>(path, null, false);
 
-        private T? TryLoadAssetCore<T>(ReadOnlySpan<char> path, string? pathString, bool throwOnError)
+        protected abstract object? LoadNewAssetOrNull(string assetPath);
+
+        private T? LoadAssetCore<T>(ReadOnlySpan<char> path, string? pathString, bool throwOnError)
         {
             // Special case: Texture2D is loaded from a Sprite
             if (typeof(T) == typeof(Texture2D))
-                return (T?)(object?)TryLoadAssetCore<Sprite>(path, pathString, throwOnError)?.texture;
+                return (T?)(object?)LoadAssetCore<Sprite>(path, pathString, throwOnError)?.texture;
 
-            object? result = TryLoadAssetCore2(path, pathString);
+            object? result = LoadAssetCore(path, pathString);
 
             if (result is null)
             {
@@ -52,9 +50,10 @@ namespace SoRR
 
             return asset;
         }
-
-        private object? TryLoadAssetCore2(ReadOnlySpan<char> path, string? pathString)
+        private object? LoadAssetCore(ReadOnlySpan<char> path, string? pathString)
         {
+            if (disposed) throw new ObjectDisposedException(ToString());
+
             // TODO: add warning logs here, instead of handling it like it's okay
             if (path.IndexOf('\\') >= 0)
             {
@@ -69,25 +68,43 @@ namespace SoRR
             if (!cache.TryGetValue(path, out object? asset))
             {
                 pathString ??= path.ToString();
-                asset = LoadAssetHandler(pathString);
+                try
+                {
+                    asset = LoadNewAssetOrNull(pathString);
+                }
+                catch (Exception ex)
+                {
+                    // TODO: Log the exception somewhere, but don't throw
+                }
                 if (asset is not null) cache.Add(pathString, asset);
             }
             return asset;
         }
 
-        protected abstract object? LoadAssetHandler(string path);
+        public T? LoadOrDefault<T>(string path)
+            => LoadAssetCore<T>(path, path, false);
+        public T? Load<T>(string path)
+            => LoadAssetCore<T>(path, path, true);
+        public bool TryLoad<T>(string path, [NotNullWhen(true)] out T? asset)
+            => (asset = LoadAssetCore<T>(path, path, false)) is not null;
 
-        protected bool RefreshAsset(string assetPath)
+        public T? LoadOrDefault<T>(ReadOnlySpan<char> path)
+            => LoadAssetCore<T>(path, null, false);
+        public T? Load<T>(ReadOnlySpan<char> path)
+            => LoadAssetCore<T>(path, null, true);
+        public bool TryLoad<T>(ReadOnlySpan<char> path, [NotNullWhen(true)] out T? asset)
+            => (asset = LoadAssetCore<T>(path, null, false)) is not null;
+
+        protected void RefreshAssetPath(string assetPath)
         {
-            if (!cache.Remove(assetPath, out object? oldAsset)) return false;
-
-            // TODO: Send an event to refresh this asset everywhere
-            // TODO: Consumers will re-request and re-load the asset if needed
-
-            // TODO: Note: to ensure smooth reloads, null assets shouldn't break consumers
-
-            return true;
+            if (cache.Remove(assetPath, out object? oldAsset))
+            {
+                // TODO: send an event to refresh this asset
+            }
         }
+
+        public override string ToString()
+            => registeredPrefix is null ? $"{DisplayName} (external)" : $"{DisplayName} ({registeredPrefix}:/*)";
 
     }
 }

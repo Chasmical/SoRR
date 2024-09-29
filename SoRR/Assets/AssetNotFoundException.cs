@@ -7,7 +7,7 @@ namespace SoRR
         public AssetManager Manager { get; } = manager;
         public string Path { get; } = path;
 
-        public override string Message => $"Asset '{Path}' could not be found in '{Manager.DisplayName}'.";
+        public override string Message => $"Asset \"{Path}\" could not be found in {Manager}.";
 
     }
 }

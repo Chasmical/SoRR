@@ -1,74 +1,109 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
+using System.Threading;
 using JetBrains.Annotations;
 
 namespace SoRR
 {
-    public sealed class ZipArchiveAssetManager : ExternalAssetManagerBase, IDisposable
+    public sealed class ZipArchiveAssetManager : ExternalAssetManagerBase
     {
-        public ZipArchive Archive { get; }
-        public override string DisplayName { get; }
+        public string ArchivePath { get; }
+        public override string DisplayName => $"\"{ArchivePath}\"";
+
+        private readonly object stateLock = new();
+
+        private ZipArchive? _archive;
+        private IReadOnlyDictionary<string, AssetInfo>? _lookup;
 
         public ZipArchiveAssetManager(string archivePath)
         {
-            // TODO: load zip archive into memory to allow hot reload?
-            Archive = ZipFile.OpenRead(archivePath);
-            DisplayName = Path.GetFileName(archivePath);
+            if (archivePath is null) throw new ArgumentNullException(nameof(archivePath));
+            ArchivePath = Path.GetFullPath(archivePath);
 
-            // TODO: set up a FileSystemWatcher monitoring the archive file
+            // TODO: implement the archive file watcher
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            Archive.Dispose();
+            base.Dispose(disposing);
+            Interlocked.Exchange(ref _archive, null)?.Dispose();
+            _lookup = null;
         }
 
-        private Dictionary<string, AssetInfo>? lookupDict;
-
-        [MemberNotNull(nameof(lookupDict))]
-        private void InitializeLookup()
+        private void InitArchive()
         {
-            Dictionary<string, AssetInfo> dict = [];
+            Debug.Assert(_archive is null);
+            Debug.Assert(Monitor.IsEntered(stateLock));
 
-            foreach (ZipArchiveEntry entry in Archive.Entries)
+            try
             {
-                string assetPath = entry.FullName;
-                ReadOnlySpan<char> assetExtension = Path.GetExtension(assetPath.AsSpan());
-                if (assetExtension is ".meta") continue;
+                MemoryStream memory = new(File.ReadAllBytes(ArchivePath));
+                _archive = new ZipArchive(memory, ZipArchiveMode.Read);
+            }
+            catch
+            {
+                // If the file doesn't exist, or if there's a file-sharing error, set to null
+                _archive = null;
+            }
+        }
 
-                string declaredName = assetPath[..^assetExtension.Length];
+        private IReadOnlyDictionary<string, AssetInfo> CreateLookup()
+        {
+            Debug.Assert(_lookup is null);
+            Debug.Assert(Monitor.IsEntered(stateLock));
 
-                if (dict.TryGetValue(declaredName, out AssetInfo prev))
+            // Try to read the archive file
+            if (_archive is null) InitArchive();
+
+            Dictionary<string, AssetInfo> lookup = [];
+            if (_archive is not null)
+            {
+                // Enumerate the entries to populate the lookup
+                foreach (ZipArchiveEntry entry in _archive.Entries)
                 {
-                    // TODO: log a warning, if there's more than one asset path
-                    continue;
+                    string assetPath = entry.FullName;
+                    ReadOnlySpan<char> assetExtension = Path.GetExtension(assetPath.AsSpan());
+                    if (assetExtension is ".meta") continue;
+
+                    string declaredName = assetPath[..^assetExtension.Length];
+
+                    if (lookup.TryGetValue(declaredName, out AssetInfo prev))
+                    {
+                        // TODO: log a warning, if there's more than one asset path
+                        continue;
+                    }
+
+                    string metadataPath = Path.ChangeExtension(assetPath, ".meta");
+                    ZipArchiveEntry? metadataEntry = _archive.GetEntry(metadataPath);
+
+                    lookup[declaredName] = new AssetInfo(entry, metadataEntry);
+                }
+            }
+            return lookup;
+        }
+
+        protected override IExternalAssetInfo? GetAssetInfo(string assetPath)
+        {
+            IReadOnlyDictionary<string, AssetInfo>? lookup = _lookup;
+            if (lookup is null)
+                lock (stateLock)
+                {
+                    lookup = _lookup;
+                    if (lookup is null) _lookup = lookup = CreateLookup();
                 }
 
-                string metadataPath = Path.ChangeExtension(assetPath, ".meta");
-                ZipArchiveEntry? metadataEntry = Archive.GetEntry(metadataPath);
-
-                dict[declaredName] = new AssetInfo(entry, metadataEntry);
-            }
-
-            lookupDict = dict;
+            return lookup.TryGetValue(assetPath, out AssetInfo info) ? info : null;
         }
 
-        protected override IAssetLoadInfo? GetAssetInfo(string assetPath)
+        public readonly struct AssetInfo(ZipArchiveEntry assetEntry, ZipArchiveEntry? metadataEntry) : IExternalAssetInfo
         {
-            if (lookupDict is null) InitializeLookup();
-            return lookupDict.TryGetValue(assetPath, out AssetInfo asset) ? asset : null;
-        }
-
-        public readonly record struct AssetInfo(ZipArchiveEntry Asset, ZipArchiveEntry? Metadata) : IAssetLoadInfo
-        {
-            public AssetFormat Format => AssetUtility.DetectFormat(Asset.FullName);
+            public AssetFormat Format => AssetUtility.DetectFormat(assetEntry.FullName);
             [MustDisposeResource]
-            public Stream OpenAsset() => Asset.Open();
+            public Stream OpenAsset() => assetEntry.Open();
             [MustDisposeResource]
-            public Stream? OpenMetadata() => Metadata?.Open();
+            public Stream? OpenMetadata() => metadataEntry?.Open();
         }
 
     }

@@ -8,15 +8,15 @@ namespace SoRR
 {
     public abstract class ExternalAssetManagerBase : AssetManager
     {
-        protected abstract IAssetLoadInfo? GetAssetInfo(string assetPath);
+        protected abstract IExternalAssetInfo? GetAssetInfo(string assetPath);
 
-        protected override object? LoadAssetHandler(string path)
+        protected override object? LoadNewAssetOrNull(string assetPath)
         {
-            IAssetLoadInfo? info = GetAssetInfo(path);
-            return info is null ? null : CreateAssetFromStream(info, path);
+            IExternalAssetInfo? info = GetAssetInfo(assetPath);
+            return info is null ? null : CreateAssetFromStream(info, assetPath);
         }
 
-        private static object CreateAssetFromStream(IAssetLoadInfo info, string path)
+        private static object CreateAssetFromStream(IExternalAssetInfo info, string assetPath)
         {
             byte[] assetData;
             using (Stream assetStream = info.OpenAsset())
@@ -48,11 +48,11 @@ namespace SoRR
                 }
                 default:
                 {
-                    throw new InvalidOperationException($"Asset '{path}' is of unknown type.");
+                    throw new InvalidOperationException($"Asset \"{assetPath}\" is of unknown type.");
                 }
             }
         }
-        private static T? CreateMetadataFromStream<T>(IAssetLoadInfo info) where T : new()
+        private static T CreateMetadataFromStream<T>(IExternalAssetInfo info) where T : struct
         {
             Stream? metadataStream = info.OpenMetadata();
             return metadataStream is null ? new T() : FileUtility.ReadJson<T>(metadataStream);
@@ -65,7 +65,7 @@ namespace SoRR
             public Rect? region;
         }
     }
-    public interface IAssetLoadInfo
+    public interface IExternalAssetInfo
     {
         [MustDisposeResource] Stream OpenAsset();
         [MustDisposeResource] Stream? OpenMetadata();

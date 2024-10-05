@@ -29,6 +29,8 @@ namespace SoRR
 
         private static readonly string[] directions24 = Enum.GetNames(typeof(Dir24));
 
+        public const int MaxToLettersLength = 4;
+
         [Pure] public static string ToLetters(this Dir4 dir)
             => dir.ToDir24().ToLetters();
         [Pure] public static string ToLetters(this Dir8 dir)

@@ -18,15 +18,23 @@ namespace SoRR
         public void SetDirection(TDir newDirection)
             => SetSpriteIndex(Unsafe.As<TDir, int>(ref newDirection));
 
-        [Pure] [return: MaybeFakeNull]
-        protected override Sprite?[] GetIndexedSprites(string spriteName)
+        [Pure] protected override Sprite?[] GetIndexedSprites(string spriteName)
         {
             int count = SoRR.Direction.CountOf<TDir>();
             Sprite?[] sprites = new Sprite?[count];
+
+            Span<char> path = stackalloc char[spriteName.Length + DirExtensions.MaxToLettersLength];
+            spriteName.AsSpan().CopyTo(path);
+
             for (int i = 0; i < count; i++)
             {
                 TDir direction = Unsafe.As<int, TDir>(ref i);
-                sprites[i] = Assets.LoadOrDefault<Sprite>(spriteName + GetDirectionSuffix(direction));
+
+                string suffix = GetDirectionSuffix(direction);
+                suffix.AsSpan().CopyTo(path[spriteName.Length..]);
+
+                int totalLength = spriteName.Length + suffix.Length;
+                sprites[i] = Assets.LoadOrDefault<Sprite>(path[..totalLength]);
             }
             return sprites;
         }
@@ -47,6 +55,6 @@ namespace SoRR
     public sealed class Dir24SpriteRenderer : DirectionalSpriteRenderer<Dir24>
     {
         [Pure] protected override string GetDirectionSuffix(Dir24 direction)
-            => direction.ToString();
+            => direction.ToLetters();
     }
 }

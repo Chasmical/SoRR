@@ -64,20 +64,20 @@ namespace SoRR
     public enum Dir4
     {
         North,
-        West,
-        South,
         East,
+        South,
+        West,
     }
     public enum Dir8
     {
         North,
-        NorthWest,
-        West,
-        SouthWest,
-        South,
-        SouthEast,
-        East,
         NorthEast,
+        East,
+        SouthEast,
+        South,
+        SouthWest,
+        West,
+        NorthWest,
     }
     public enum Dir24
     {

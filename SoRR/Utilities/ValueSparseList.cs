@@ -2,16 +2,31 @@
 
 namespace SoRR
 {
+    /// <summary>
+    ///   <para>A simple structure managing a sparse collection of reference type values.</para>
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the list.</typeparam>
     public struct ValueSparseList<T> where T : class
     {
         private T?[] _items;
         private int _size;
         private int _nullCount;
 
+        /// <summary>
+        ///   <para>Initializes a new instance of the <see cref="ValueSparseList{T}"/> structure.</para>
+        /// </summary>
         public ValueSparseList() => _items = [];
 
-        public ReadOnlySpan<T?> GetItems() => _items[.._size];
+        /// <summary>
+        ///   <para>Returns a read-only sparse view of the collection's items.</para>
+        /// </summary>
+        /// <returns>A read-only sparse view of the collection's items.</returns>
+        public readonly ReadOnlySpan<T?> GetItems() => _items[.._size];
 
+        /// <summary>
+        ///   <para>Adds the specified <paramref name="item"/> to the sparse list.</para>
+        /// </summary>
+        /// <param name="item">The item to add to the sparse list.</param>
         public void Add(T item)
         {
             T?[] items = _items;
@@ -32,6 +47,10 @@ namespace SoRR
             _items[size] = item;
         }
 
+        /// <summary>
+        ///   <para>Removes the specified <paramref name="item"/> from the sparse list.</para>
+        /// </summary>
+        /// <param name="item">The item to remove from the sparse list.</param>
         public void Remove(T item)
         {
             T?[] items = _items;
@@ -42,6 +61,7 @@ namespace SoRR
                 {
                     items[i] = null;
                     if (size > 4 && ++_nullCount >= size / 2) TrimNulls();
+                    break;
                 }
         }
         private void TrimNulls()
@@ -60,6 +80,7 @@ namespace SoRR
                 while (i < size && items[i] is null) i++;
                 if (i < size) items[pos++] = items[i++];
             }
+            Array.Clear(items, pos, size - pos);
 
             _nullCount = 0;
             _size = pos;

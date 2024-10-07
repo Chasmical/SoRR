@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
-using UnityEngine;
 
 namespace SoRR
 {
@@ -18,10 +17,10 @@ namespace SoRR
         public void SetDirection(TDir newDirection)
             => SetSpriteIndex(Unsafe.As<TDir, int>(ref newDirection));
 
-        [Pure] protected override Sprite?[] GetIndexedSprites(string spriteName)
+        [Pure] protected override AssetHandle?[] GetSpriteAssets(string spriteName, AssetHandle?[]? prev)
         {
             int count = SoRR.Direction.CountOf<TDir>();
-            Sprite?[] sprites = new Sprite?[count];
+            AssetHandle?[] assets = prev?.Length == count ? prev : new AssetHandle?[count];
 
             Span<char> path = stackalloc char[spriteName.Length + DirExtensions.MaxToLettersLength];
             spriteName.AsSpan().CopyTo(path);
@@ -34,9 +33,9 @@ namespace SoRR
                 suffix.AsSpan().CopyTo(path[spriteName.Length..]);
 
                 int totalLength = spriteName.Length + suffix.Length;
-                sprites[i] = Assets.LoadOrDefault<Sprite>(path[..totalLength]);
+                assets[i] = Assets.GetHandle(path[..totalLength]);
             }
-            return sprites;
+            return assets;
         }
 
         [Pure] protected abstract string GetDirectionSuffix(TDir direction);

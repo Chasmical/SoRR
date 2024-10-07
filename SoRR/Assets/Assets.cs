@@ -22,6 +22,16 @@ namespace SoRR
             return false;
         }
 
+        public static AssetHandle? GetHandle(string fullPath)
+            => GetHandle(fullPath.AsSpan());
+        public static AssetHandle? GetHandle(ReadOnlySpan<char> fullPath)
+        {
+            SplitPath(fullPath, out var prefix, out var relativePath);
+            return managers.TryGetValue(prefix, out AssetManager? manager)
+                ? manager.GetHandle(relativePath)
+                : null;
+        }
+
         public static T? LoadOrDefault<T>(string fullPath)
             => LoadOrDefault<T>(fullPath.AsSpan());
         public static T? Load<T>(string fullPath)

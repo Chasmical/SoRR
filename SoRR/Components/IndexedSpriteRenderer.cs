@@ -1,16 +1,16 @@
-﻿using JetBrains.Annotations;
-using UnityEngine;
+﻿using System;
+using JetBrains.Annotations;
 
 namespace SoRR
 {
-    public abstract class IndexedSpriteRenderer : MonoBehaviour
+    public abstract class IndexedSpriteRenderer : AssetSpriteRenderer
     {
-        [field: Inject] public SpriteRenderer Renderer { get; } = null!;
-
+        [MaybeFakeNull] private AssetHandle?[]? spriteAssets;
         protected string? _spriteName;
         protected int _spriteIndex;
 
-        [MaybeFakeNull] private Sprite?[]? indexedSprites;
+        [Obsolete($"{nameof(IndexedSpriteRenderer)}'s asset handle should not be set from outside.")]
+        public new AssetHandle? Handle => base.Handle;
 
         public string? SpriteName
         {
@@ -22,14 +22,6 @@ namespace SoRR
             get => _spriteIndex;
             set => SetSpriteIndex(value);
         }
-        public Color Color
-        {
-            get => Renderer.color;
-            set => Renderer.color = value;
-        }
-
-        protected virtual void Awake()
-            => Injector.Inject(this);
 
         public void SetSprite(string? newSpriteName)
             => SetSprite(newSpriteName, _spriteIndex);
@@ -55,16 +47,15 @@ namespace SoRR
         private void UpdateIndexedSprites(string? newSpriteName)
         {
             _spriteName = newSpriteName;
-            indexedSprites = newSpriteName is null ? null : GetIndexedSprites(newSpriteName);
+            spriteAssets = newSpriteName is null ? null : GetSpriteAssets(newSpriteName, spriteAssets);
         }
         private void SetRendererSpriteIndex(int index)
         {
             _spriteIndex = index;
-            Renderer.sprite = indexedSprites?[index];
+            base.Handle = spriteAssets?[index];
         }
 
-        [Pure] [return: MaybeFakeNull]
-        protected abstract Sprite?[] GetIndexedSprites(string spriteName);
+        [Pure] protected abstract AssetHandle?[] GetSpriteAssets(string spriteName, AssetHandle?[]? prevAssets);
 
     }
 }

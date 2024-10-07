@@ -7,10 +7,13 @@ namespace SoRR
     public abstract class AssetManager : IDisposable
     {
         internal string? registeredPrefix;
-        protected StringKeyedDictionary<object> cache = new();
+        protected StringKeyedDictionary<AssetHandle> cache = new();
         protected bool disposed;
 
         public abstract string DisplayName { get; }
+
+        public override string ToString()
+            => registeredPrefix is null ? $"{DisplayName} (external)" : $"{DisplayName} ({registeredPrefix}:/*)";
 
         public void Dispose()
         {
@@ -29,13 +32,17 @@ namespace SoRR
 
         protected abstract object? LoadNewAssetOrNull(string assetPath);
 
+        internal object? LoadNewAssetInternal(string assetPath)
+            => LoadNewAssetOrNull(assetPath);
+
         private T? LoadAssetCore<T>(ReadOnlySpan<char> path, string? pathString, bool throwOnError)
         {
             // Special case: Texture2D is loaded from a Sprite
             if (typeof(T) == typeof(Texture2D))
                 return (T?)(object?)LoadAssetCore<Sprite>(path, pathString, throwOnError)?.texture;
 
-            object? result = LoadAssetCore(path, pathString);
+            // Get the associated handle, and try to get the asset using it
+            object? result = GetHandleCore(path, pathString)?.Value;
 
             if (result is null)
             {
@@ -50,7 +57,10 @@ namespace SoRR
 
             return asset;
         }
-        private object? LoadAssetCore(ReadOnlySpan<char> path, string? pathString)
+
+        public AssetHandle? GetHandle(ReadOnlySpan<char> path)
+            => GetHandleCore(path, null);
+        private AssetHandle? GetHandleCore(ReadOnlySpan<char> path, string? pathString)
         {
             if (disposed) throw new ObjectDisposedException(ToString());
 
@@ -65,9 +75,10 @@ namespace SoRR
                 pathString = null;
             }
 
-            if (!cache.TryGetValue(path, out object? asset))
+            if (!cache.TryGetValue(path, out AssetHandle? handle))
             {
                 pathString ??= path.ToString();
+                object? asset = null;
                 try
                 {
                     asset = LoadNewAssetOrNull(pathString);
@@ -76,9 +87,10 @@ namespace SoRR
                 {
                     // TODO: Log the exception somewhere, but don't throw
                 }
-                if (asset is not null) cache.Add(pathString, asset);
+                if (asset is not null)
+                    cache.Add(pathString, handle = new AssetHandle(this, pathString, asset));
             }
-            return asset;
+            return handle;
         }
 
         public T? LoadOrDefault<T>(string path)
@@ -97,14 +109,15 @@ namespace SoRR
 
         protected void RefreshAssetPath(string assetPath)
         {
-            if (cache.Remove(assetPath, out object? oldAsset))
-            {
-                // TODO: send an event to refresh this asset
-            }
+            if (cache.TryGetValue(assetPath, out AssetHandle? handle))
+                handle.TriggerRefresh();
         }
-
-        public override string ToString()
-            => registeredPrefix is null ? $"{DisplayName} (external)" : $"{DisplayName} ({registeredPrefix}:/*)";
+        protected void RefreshAssetPaths(string[] assetPaths)
+        {
+            for (int i = 0; i < assetPaths.Length; i++)
+                if (cache.TryGetValue(assetPaths[i], out AssetHandle? handle))
+                    handle.TriggerRefresh();
+        }
 
     }
 }

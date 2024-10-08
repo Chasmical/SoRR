@@ -34,9 +34,20 @@ namespace SoRR
             return Unsafe.As<byte, long>(ref span[0]);
         }
 
+        /// <summary>
+        ///   <para>The minimum amount of bytes required to detect a supported audio format.</para>
+        /// </summary>
         public const int MinBytesToDetectAudioFormat = 12; // wav header length
+        /// <summary>
+        ///   <para>The minimum amount of bytes required to detect a supported image format.</para>
+        /// </summary>
         public const int MinBytesToDetectImageFormat = 8; // png header length
 
+        /// <summary>
+        ///   <para>Attempts to identify the audio format of the specified <paramref name="rawData"/>.</para>
+        /// </summary>
+        /// <param name="rawData">A read-only span of bytes to identify.</param>
+        /// <returns>The identified audio format, or <see cref="AudioType.UNKNOWN"/> if it could not be identified.</returns>
         [Pure] public static AudioType DetectAudioFormat(ReadOnlySpan<byte> rawData)
         {
             if (rawData.Length < MinBytesToDetectAudioFormat) return AudioType.UNKNOWN;
@@ -58,6 +69,11 @@ namespace SoRR
             return AudioType.UNKNOWN;
         }
 
+        /// <summary>
+        ///   <para>Attempts to identify the image format of the specified <paramref name="rawData"/>.</para>
+        /// </summary>
+        /// <param name="rawData">A read-only span of bytes to identify.</param>
+        /// <returns>The identified image format, or <see cref="ImageType.UNKNOWN"/> if it could not be identified.</returns>
         [Pure] public static ImageType DetectImageFormat(ReadOnlySpan<byte> rawData)
         {
             if (rawData.Length < MinBytesToDetectImageFormat) return ImageType.UNKNOWN;
@@ -75,6 +91,11 @@ namespace SoRR
             return ImageType.UNKNOWN;
         }
 
+        /// <summary>
+        ///   <para>Returns the asset format associated with the specified file extension.</para>
+        /// </summary>
+        /// <param name="pathOrExtension">The file's extension, or a path to the file.</param>
+        /// <returns>The identified asset format, or <see cref="AssetFormat.Unknown"/> if it could not be identified.</returns>
         [Pure] public static AssetFormat DetectFormat(ReadOnlySpan<char> pathOrExtension)
         {
             pathOrExtension = Path.GetExtension(pathOrExtension);
@@ -101,10 +122,18 @@ namespace SoRR
             };
         }
 
+        /// <summary>
+        ///   <para>Returns the asset type of the specified asset <paramref name="format"/>.</para>
+        /// </summary>
+        /// <param name="format">The asset format to get the type of.</param>
+        /// <returns>The asset type of the specified asset <paramref name="format"/>.</returns>
         [Pure] public static AssetType ToType(this AssetFormat format)
             => (AssetType)((int)(format + 31) >> 5);
 
     }
+    /// <summary>
+    ///   <para>Defines the supported image data formats.</para>
+    /// </summary>
     public enum ImageType
     {
         // ReSharper disable InconsistentNaming
@@ -113,6 +142,9 @@ namespace SoRR
         JPEG = 34,
         // ReSharper restore InconsistentNaming
     }
+    /// <summary>
+    ///   <para>Defines the types of assets.</para>
+    /// </summary>
     public enum AssetType
     {
         // ReSharper disable InconsistentNaming
@@ -124,6 +156,9 @@ namespace SoRR
         BINARY = 5,
         // ReSharper restore InconsistentNaming
     }
+    /// <summary>
+    ///   <para>Defines all the supported asset data formats.</para>
+    /// </summary>
     public enum AssetFormat
     {
         Unknown = 0,

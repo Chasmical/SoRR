@@ -9,7 +9,9 @@ namespace SoRR
 {
     public static partial class AssetUtility
     {
-        [Pure] public static Sprite CreateSprite(byte[] rawData, Rect? region = null, float ppu = 64f)
+        [Pure] public static Sprite CreateSprite(byte[] rawData, float ppu = 64f)
+            => CreateSprite(rawData, Rect.zero, ppu);
+        [Pure] public static Sprite CreateSprite(byte[] rawData, Rect region, float ppu = 64f)
         {
             if (rawData is null) throw new ArgumentNullException(nameof(rawData));
             if (ppu <= 0f) throw new ArgumentOutOfRangeException(nameof(ppu), ppu, $"{nameof(ppu)} is less than or equal to 0.");
@@ -17,9 +19,9 @@ namespace SoRR
             Texture2D texture = new Texture2D(15, 9);
             texture.LoadImage(rawData, false);
             texture.filterMode = FilterMode.Point;
-            Rect rect = region ?? new Rect(0f, 0f, texture.width, texture.height);
+            if (region == Rect.zero) region = new Rect(0f, 0f, texture.width, texture.height);
 
-            return Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), ppu, 1u, SpriteMeshType.FullRect, Vector4.zero, false);
+            return Sprite.Create(texture, region, new Vector2(0.5f, 0.5f), ppu, 1u, SpriteMeshType.FullRect, Vector4.zero, false);
         }
 
         [Pure] public static async Task<AudioClip> CreateAudioClipAsync(byte[] rawData)

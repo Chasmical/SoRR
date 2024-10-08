@@ -18,8 +18,7 @@ namespace SoRR
         public static T GetOrAddComponent<T>(this GameObject gameObject) where T : Component
         {
             if (gameObject is null) throw new ArgumentNullException(nameof(gameObject));
-            T? component = gameObject.GetComponent<T>();
-            return (bool)component ? component : gameObject.AddComponent<T>();
+            return gameObject.TryGetComponent(out T component) ? component : gameObject.AddComponent<T>();
         }
         /// <summary>
         ///   <para>Gets or adds a component of the specified <paramref name="componentType"/> on the specified <paramref name="gameObject"/>.</para>
@@ -31,8 +30,7 @@ namespace SoRR
         public static Component GetOrAddComponent(this GameObject gameObject, Type componentType)
         {
             if (gameObject is null) throw new ArgumentNullException(nameof(gameObject));
-            Component? component = gameObject.GetComponent(componentType);
-            return (bool)component ? component : gameObject.AddComponent(componentType);
+            return gameObject.TryGetComponent(componentType, out Component component) ? component : gameObject.AddComponent(componentType);
         }
 
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -40,7 +41,7 @@ namespace SoRR
         {
             if (rawData.Length < MinBytesToDetectAudioFormat) return AudioType.UNKNOWN;
 
-            ref int int32 = ref Unsafe.As<byte, int>(ref Unsafe.AsRef(in rawData[0]));
+            ref int int32 = ref Unsafe.As<byte, int>(ref MemoryMarshal.GetReference(rawData));
 
             if (int32 == OggHeader)
                 return AudioType.OGGVORBIS;
@@ -61,12 +62,12 @@ namespace SoRR
         {
             if (rawData.Length < MinBytesToDetectImageFormat) return ImageType.UNKNOWN;
 
-            ref long int64 = ref Unsafe.As<byte, long>(ref Unsafe.AsRef(in rawData[0]));
+            ref long int64 = ref Unsafe.As<byte, long>(ref MemoryMarshal.GetReference(rawData));
 
             if (int64 == PngHeader)
                 return ImageType.PNG;
 
-            ref int int32 = ref Unsafe.As<byte, int>(ref Unsafe.AsRef(in rawData[0]));
+            ref int int32 = ref Unsafe.As<byte, int>(ref MemoryMarshal.GetReference(rawData));
 
             if ((int32 & FirstThreeBytesMask) == JpegHeader)
                 return ImageType.JPEG;

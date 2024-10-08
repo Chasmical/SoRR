@@ -27,7 +27,7 @@ namespace SoRR
                 case AssetType.IMAGE:
                 {
                     SpriteMetadata metadata = CreateMetadataFromStream<SpriteMetadata>(info);
-                    return AssetUtility.CreateSprite(assetData, metadata.region, metadata.ppu);
+                    return AssetUtility.CreateSprite(assetData, metadata.region.GetValueOrDefault(), metadata.ppu);
                 }
                 case AssetType.AUDIO:
                 {

@@ -10,16 +10,10 @@ namespace SoRR
 
         private ValueSparseList<Action<AssetHandle>> listenersList = new();
 
-        public event Action<AssetHandle> OnRefreshed
-        {
-            add => AddListener(value);
-            remove => RemoveListener(value);
-        }
-
         private object? value;
-        public object? Value => value ??= AssetManager.LoadNewAssetInternal(RelativePath);
+        public object? Value => value ??= AssetManager.LoadNewAssetOrNull(RelativePath);
 
-        public AssetHandle(AssetManager assetManager, string relativePath, object? currentValue)
+        internal AssetHandle(AssetManager assetManager, string relativePath, object? currentValue)
         {
             AssetManager = assetManager;
             RelativePath = relativePath;
@@ -31,7 +25,7 @@ namespace SoRR
         public void RemoveListener(Action<AssetHandle> listener)
             => listenersList.Remove(listener);
 
-        public void TriggerRefresh()
+        internal void TriggerReload()
         {
             value = null;
             Version++;

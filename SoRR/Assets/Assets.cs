@@ -32,20 +32,8 @@ namespace SoRR
                 : null;
         }
 
-        public static T? LoadOrDefault<T>(string fullPath)
-            => LoadOrDefault<T>(fullPath.AsSpan());
         public static T? Load<T>(string fullPath)
             => Load<T>(fullPath.AsSpan());
-        public static bool TryLoad<T>(string fullPath, [NotNullWhen(true)] out T? asset)
-            => TryLoad(fullPath.AsSpan(), out asset);
-
-        public static T? LoadOrDefault<T>(ReadOnlySpan<char> fullPath)
-        {
-            SplitPath(fullPath, out var prefix, out var relativePath);
-            return managers.TryGetValue(prefix, out AssetManager? manager)
-                ? manager.LoadOrDefault<T>(relativePath)
-                : default;
-        }
         public static T? Load<T>(ReadOnlySpan<char> fullPath)
         {
             SplitPath(fullPath, out var prefix, out var relativePath);
@@ -53,6 +41,9 @@ namespace SoRR
                 ? manager.Load<T>(relativePath)
                 : throw new ArgumentException("Could not find specified asset manager prefix.", nameof(fullPath));
         }
+
+        public static bool TryLoad<T>(string fullPath, [NotNullWhen(true)] out T? asset)
+            => TryLoad(fullPath.AsSpan(), out asset);
         public static bool TryLoad<T>(ReadOnlySpan<char> fullPath, [NotNullWhen(true)] out T? asset)
         {
             SplitPath(fullPath, out var prefix, out var relativePath);

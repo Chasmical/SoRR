@@ -25,7 +25,7 @@ namespace SoRR
 
         public static UnityAssetManager Instance { get; } = new UnityAssetManager(ResourcesAPI.ActiveAPI);
 
-        protected override object? LoadNewAssetOrNull(string assetPath)
+        protected internal override object? LoadNewAssetOrNull(string assetPath)
         {
             UnityEngine.Object? asset = ResourcesApi.Load(assetPath, typeof(UnityEngine.Object));
             if (!asset) return null;

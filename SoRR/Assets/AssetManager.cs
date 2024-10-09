@@ -21,45 +21,19 @@ namespace SoRR
             disposed = true;
 
             Dispose(true);
-            cache = null!;
-
             GC.SuppressFinalize(this);
         }
         protected virtual void Dispose(bool disposing)
         {
-            Assets.UnRegisterAssetManager(this);
+            if (disposing)
+            {
+                Assets.UnRegisterAssetManager(this);
+                cache = null!;
+            }
         }
 
-        protected abstract object? LoadNewAssetOrNull(string assetPath);
+        protected internal abstract object? LoadNewAssetOrNull(string assetPath);
 
-        internal object? LoadNewAssetInternal(string assetPath)
-            => LoadNewAssetOrNull(assetPath);
-
-        private T? LoadAssetCore<T>(ReadOnlySpan<char> path, string? pathString, bool throwOnError)
-        {
-            // Special case: Texture2D is loaded from a Sprite
-            if (typeof(T) == typeof(Texture2D))
-                return (T?)(object?)LoadAssetCore<Sprite>(path, pathString, throwOnError)?.texture;
-
-            // Get the associated handle, and try to get the asset using it
-            object? result = GetHandleCore(path, pathString)?.Value;
-
-            if (result is null)
-            {
-                if (!throwOnError) return default;
-                throw new AssetNotFoundException(this, path.ToString());
-            }
-            if (result is not T asset)
-            {
-                if (!throwOnError) return default;
-                throw new InvalidCastException($"Could not cast asset '{path.ToString()}' of type {result.GetType()} to {typeof(T)}.");
-            }
-
-            return asset;
-        }
-
-        public AssetHandle? GetHandle(ReadOnlySpan<char> path)
-            => GetHandleCore(path, null);
         private AssetHandle? GetHandleCore(ReadOnlySpan<char> path, string? pathString)
         {
             if (disposed) throw new ObjectDisposedException(ToString());
@@ -93,30 +67,46 @@ namespace SoRR
             return handle;
         }
 
-        public T? LoadOrDefault<T>(string path)
-            => LoadAssetCore<T>(path, path, false);
+        public AssetHandle? GetHandle(ReadOnlySpan<char> path)
+            => GetHandleCore(path, null);
+
+        private T? LoadAssetCore<T>(ReadOnlySpan<char> path, string? pathString, bool throwOnError)
+        {
+            // Special case: Texture2D is loaded from a Sprite
+            if (typeof(T) == typeof(Texture2D))
+                return (T?)(object?)LoadAssetCore<Sprite>(path, pathString, throwOnError)?.texture;
+
+            // Get the associated handle, and try to get the asset using it
+            object? result = GetHandleCore(path, pathString)?.Value;
+
+            if (result is null)
+            {
+                if (!throwOnError) return default;
+                throw new AssetNotFoundException(this, path.ToString());
+            }
+            if (result is not T asset)
+            {
+                if (!throwOnError) return default;
+                throw new InvalidCastException($"Could not cast asset '{path.ToString()}' of type {result.GetType()} to {typeof(T)}.");
+            }
+
+            return asset;
+        }
+
         public T? Load<T>(string path)
             => LoadAssetCore<T>(path, path, true);
-        public bool TryLoad<T>(string path, [NotNullWhen(true)] out T? asset)
-            => (asset = LoadAssetCore<T>(path, path, false)) is not null;
-
-        public T? LoadOrDefault<T>(ReadOnlySpan<char> path)
-            => LoadAssetCore<T>(path, null, false);
         public T? Load<T>(ReadOnlySpan<char> path)
             => LoadAssetCore<T>(path, null, true);
+
+        public bool TryLoad<T>(string path, [NotNullWhen(true)] out T? asset)
+            => (asset = LoadAssetCore<T>(path, path, false)) is not null;
         public bool TryLoad<T>(ReadOnlySpan<char> path, [NotNullWhen(true)] out T? asset)
             => (asset = LoadAssetCore<T>(path, null, false)) is not null;
 
-        protected void RefreshAssetPath(string assetPath)
+        protected void ReloadAssetPath(ReadOnlySpan<char> path)
         {
-            if (cache.TryGetValue(assetPath, out AssetHandle? handle))
-                handle.TriggerRefresh();
-        }
-        protected void RefreshAssetPaths(string[] assetPaths)
-        {
-            for (int i = 0; i < assetPaths.Length; i++)
-                if (cache.TryGetValue(assetPaths[i], out AssetHandle? handle))
-                    handle.TriggerRefresh();
+            if (cache.TryGetValue(path, out AssetHandle? handle))
+                handle.TriggerReload();
         }
 
     }

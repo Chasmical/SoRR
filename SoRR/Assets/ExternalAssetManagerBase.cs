@@ -10,7 +10,7 @@ namespace SoRR
     {
         protected abstract IExternalAssetInfo? GetAssetInfo(string assetPath);
 
-        protected override object? LoadNewAssetOrNull(string assetPath)
+        protected internal override object? LoadNewAssetOrNull(string assetPath)
         {
             IExternalAssetInfo? info = GetAssetInfo(assetPath);
             return info is null ? null : CreateAssetFromStream(info, assetPath);

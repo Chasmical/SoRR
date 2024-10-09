@@ -8,9 +8,9 @@ namespace SoRR
         public string RelativePath { get; }
         public int Version { get; private set; }
 
-        private ValueSparseList<Action<AssetHandle>> listenersList = new();
-
         private object? value;
+        private ValueSparseCollection<Action<AssetHandle>> _listenersCollection = new();
+
         public object? Value => value ??= AssetManager.LoadNewAssetOrNull(RelativePath);
 
         internal AssetHandle(AssetManager assetManager, string relativePath, object? currentValue)
@@ -21,16 +21,22 @@ namespace SoRR
         }
 
         public void AddListener(Action<AssetHandle> listener)
-            => listenersList.Add(listener);
+        {
+            if (listener is null) throw new ArgumentNullException(nameof(listener));
+            _listenersCollection.Add(listener);
+        }
         public void RemoveListener(Action<AssetHandle> listener)
-            => listenersList.Remove(listener);
+        {
+            if (listener is null) throw new ArgumentNullException(nameof(listener));
+            _listenersCollection.Remove(listener);
+        }
 
         internal void TriggerReload()
         {
             value = null;
             Version++;
 
-            var listeners = listenersList.GetItems();
+            var listeners = _listenersCollection.GetItems();
             for (int i = 0; i < listeners.Length; i++)
                 listeners[i]?.Invoke(this);
         }

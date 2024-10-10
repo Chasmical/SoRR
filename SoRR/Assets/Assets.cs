@@ -3,15 +3,28 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace SoRR
 {
+    /// <summary>
+    ///   <para>Provides a set of static methods to manage asset managers and load assets.</para>
+    /// </summary>
     public static class Assets
     {
         private static readonly StringKeyedDictionary<AssetManager> managers = new();
 
+        /// <summary>
+        ///   <para>Adds the specified asset <paramref name="manager"/> to the global registry under the specified <paramref name="prefix"/>.</para>
+        /// </summary>
+        /// <param name="manager">The asset manager to register under the specified <paramref name="prefix"/>.</param>
+        /// <param name="prefix">The global prefix to register the specified asset <paramref name="manager"/> under.</param>
         public static void RegisterAssetManager(AssetManager manager, string prefix)
         {
             managers.Add(prefix, manager);
             manager.registeredPrefix = prefix;
         }
+        /// <summary>
+        ///   <para>Removes the specified asset <paramref name="manager"/> from the global registry.</para>
+        /// </summary>
+        /// <param name="manager">The asset manager to remove from the global registry.</param>
+        /// <returns><see langword="true"/>, if the specified asset <paramref name="manager"/> was successfully removed; otherwise, <see langword="false"/>.</returns>
         public static bool UnRegisterAssetManager(AssetManager manager)
         {
             if (manager.registeredPrefix is not null && managers.Remove(manager.registeredPrefix))
@@ -22,8 +35,18 @@ namespace SoRR
             return false;
         }
 
+        /// <summary>
+        ///   <para>Returns the handle for an asset at the specified <paramref name="fullPath"/>.</para>
+        /// </summary>
+        /// <param name="fullPath">A fully qualified path to the asset to get the handle of.</param>
+        /// <returns>The handle for the specified asset, or <see langword="null"/> if it is not found.</returns>
         public static AssetHandle? GetHandle(string fullPath)
             => GetHandle(fullPath.AsSpan());
+        /// <summary>
+        ///   <para>Returns the handle for an asset at the specified <paramref name="fullPath"/>.</para>
+        /// </summary>
+        /// <param name="fullPath">A fully qualified path to the asset to get the handle of.</param>
+        /// <returns>The handle for the specified asset, or <see langword="null"/> if it is not found.</returns>
         public static AssetHandle? GetHandle(ReadOnlySpan<char> fullPath)
         {
             SplitPath(fullPath, out var prefix, out var relativePath);
@@ -32,8 +55,24 @@ namespace SoRR
                 : null;
         }
 
+        /// <summary>
+        ///   <para>Loads an asset at the specified <paramref name="fullPath"/> and returns it.</para>
+        /// </summary>
+        /// <typeparam name="T">The type of the asset to load.</typeparam>
+        /// <param name="fullPath">A fully qualified path to the asset to load.</param>
+        /// <returns>The specified asset.</returns>
+        /// <exception cref="AssetNotFoundException">An asset at the specified <paramref name="fullPath"/> could not be found.</exception>
+        /// <exception cref="InvalidCastException">An asset at the specified <paramref name="fullPath"/> could not be cast to type <typeparamref name="T"/>.</exception>
         public static T? Load<T>(string fullPath)
             => Load<T>(fullPath.AsSpan());
+        /// <summary>
+        ///   <para>Loads an asset at the specified <paramref name="fullPath"/> and returns it.</para>
+        /// </summary>
+        /// <typeparam name="T">The type of the asset to load.</typeparam>
+        /// <param name="fullPath">A fully qualified path to the asset to load.</param>
+        /// <returns>The specified asset.</returns>
+        /// <exception cref="AssetNotFoundException">An asset at the specified <paramref name="fullPath"/> could not be found.</exception>
+        /// <exception cref="InvalidCastException">An asset at the specified <paramref name="fullPath"/> could not be cast to type <typeparamref name="T"/>.</exception>
         public static T? Load<T>(ReadOnlySpan<char> fullPath)
         {
             SplitPath(fullPath, out var prefix, out var relativePath);
@@ -42,8 +81,22 @@ namespace SoRR
                 : throw new ArgumentException("Could not find specified asset manager prefix.", nameof(fullPath));
         }
 
+        /// <summary>
+        ///   <para>Tries to load an asset at the specified <paramref name="fullPath"/>, and returns a value indicating whether the operation was successful.</para>
+        /// </summary>
+        /// <typeparam name="T">The type of the asset to load.</typeparam>
+        /// <param name="fullPath">A fully qualified path to the asset to load.</param>
+        /// <param name="asset">When this method returns, contains the specified asset, if it was successfully loaded, or <see langword="default"/> if it could not be loaded.</param>
+        /// <returns><see langword="true"/>, if the specified asset was successfully loaded; otherwise, <see langword="false"/>.</returns>
         public static bool TryLoad<T>(string fullPath, [NotNullWhen(true)] out T? asset)
             => TryLoad(fullPath.AsSpan(), out asset);
+        /// <summary>
+        ///   <para>Tries to load an asset at the specified <paramref name="fullPath"/>, and returns a value indicating whether the operation was successful.</para>
+        /// </summary>
+        /// <typeparam name="T">The type of the asset to load.</typeparam>
+        /// <param name="fullPath">A fully qualified path to the asset to load.</param>
+        /// <param name="asset">When this method returns, contains the specified asset, if it was successfully loaded, or <see langword="default"/> if it could not be loaded.</param>
+        /// <returns><see langword="true"/>, if the specified asset was successfully loaded; otherwise, <see langword="false"/>.</returns>
         public static bool TryLoad<T>(ReadOnlySpan<char> fullPath, [NotNullWhen(true)] out T? asset)
         {
             SplitPath(fullPath, out var prefix, out var relativePath);

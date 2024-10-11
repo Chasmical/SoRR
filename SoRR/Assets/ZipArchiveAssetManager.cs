@@ -7,9 +7,16 @@ using JetBrains.Annotations;
 
 namespace SoRR
 {
+    /// <summary>
+    ///   <para>Represents an asset manager, that loads assets from a specified archive file.</para>
+    /// </summary>
     public sealed class ZipArchiveAssetManager : ExternalAssetManagerBase
     {
+        /// <summary>
+        ///   <para>Gets the full path to the archive file that the asset manager loads assets from.</para>
+        /// </summary>
         public string ArchivePath { get; }
+        /// <inheritdoc/>
         public override string DisplayName => $"\"{ArchivePath}\"";
 
         private readonly object stateLock = new();
@@ -17,6 +24,11 @@ namespace SoRR
         private ZipArchive? _archive;
         private IReadOnlyDictionary<string, AssetInfo>? _lookup;
 
+        /// <summary>
+        ///   <para>Initializes a new instance of the <see cref="ZipArchiveAssetManager"/> class with the specified <paramref name="archivePath"/>.</para>
+        /// </summary>
+        /// <param name="archivePath">A path to the archive to load assets from.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="archivePath"/> is <see langword="null"/>.</exception>
         public ZipArchiveAssetManager(string archivePath)
         {
             if (archivePath is null) throw new ArgumentNullException(nameof(archivePath));
@@ -25,6 +37,7 @@ namespace SoRR
             // TODO: implement the archive file watcher
         }
 
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
@@ -84,6 +97,7 @@ namespace SoRR
             return lookup;
         }
 
+        /// <inheritdoc/>
         protected override IExternalAssetInfo? GetAssetInfo(string assetPath)
         {
             IReadOnlyDictionary<string, AssetInfo>? lookup = _lookup;
@@ -97,7 +111,7 @@ namespace SoRR
             return lookup.TryGetValue(assetPath, out AssetInfo info) ? info : null;
         }
 
-        public readonly struct AssetInfo(ZipArchiveEntry assetEntry, ZipArchiveEntry? metadataEntry) : IExternalAssetInfo
+        private readonly struct AssetInfo(ZipArchiveEntry assetEntry, ZipArchiveEntry? metadataEntry) : IExternalAssetInfo
         {
             public AssetFormat Format => AssetUtility.DetectFormat(assetEntry.FullName);
             [MustDisposeResource]

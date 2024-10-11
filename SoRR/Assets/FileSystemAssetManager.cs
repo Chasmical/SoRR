@@ -4,11 +4,23 @@ using JetBrains.Annotations;
 
 namespace SoRR
 {
+    /// <summary>
+    ///   <para>Represents an asset manager, that loads assets from a specified directory.</para>
+    /// </summary>
     public sealed class FileSystemAssetManager : ExternalAssetManagerBase
     {
+        /// <summary>
+        ///   <para>Gets the full path to the directory that the asset manager loads assets from.</para>
+        /// </summary>
         public string DirectoryPath { get; }
+        /// <inheritdoc/>
         public override string DisplayName => $"\"{DirectoryPath}{Path.DirectorySeparatorChar}\"";
 
+        /// <summary>
+        ///   <para>Initializes a new instance of the <see cref="FileSystemAssetManager"/> class with the specified <paramref name="directoryPath"/>.</para>
+        /// </summary>
+        /// <param name="directoryPath">A path to the directory to load assets from.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="directoryPath"/> is <see langword="null"/>.</exception>
         public FileSystemAssetManager(string directoryPath)
         {
             if (directoryPath is null) throw new ArgumentNullException(nameof(directoryPath));
@@ -17,6 +29,7 @@ namespace SoRR
             // TODO: reimplement the directory watcher
         }
 
+        /// <inheritdoc/>
         protected override IExternalAssetInfo? GetAssetInfo(string assetPath)
         {
             string? mainPath = null;
@@ -43,7 +56,7 @@ namespace SoRR
             return new AssetInfo(mainPath, metadataPath);
         }
 
-        public readonly struct AssetInfo(string assetPath, string? metadataPath) : IExternalAssetInfo
+        private readonly struct AssetInfo(string assetPath, string? metadataPath) : IExternalAssetInfo
         {
             public AssetFormat Format => AssetUtility.DetectFormat(assetPath);
             [MustDisposeResource]

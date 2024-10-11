@@ -3,17 +3,30 @@ using UnityEngine;
 
 namespace SoRR
 {
+    /// <summary>
+    ///   <para>Represents an asset manager, that loads assets from Unity's <see cref="ResourcesAPI"/>.</para>
+    /// </summary>
     public sealed class UnityAssetManager : AssetManager
     {
+        /// <summary>
+        ///   <para>Gets the <see cref="ResourcesAPI"/> used by the asset manager.</para>
+        /// </summary>
         public ResourcesAPI ResourcesApi { get; }
+        /// <inheritdoc/>
         public override string DisplayName => "Unity Resources";
 
+        /// <summary>
+        ///   <para>Initializes a new instance of the <see cref="UnityAssetManager"/> with the specified <paramref name="resourcesApi"/>.</para>
+        /// </summary>
+        /// <param name="resourcesApi">The <see cref="ResourcesAPI"/> to use.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="resourcesApi"/> is <see langword="null"/>.</exception>
         public UnityAssetManager(ResourcesAPI resourcesApi)
         {
             if (resourcesApi is null) throw new ArgumentNullException(nameof(resourcesApi));
             ResourcesApi = resourcesApi;
         }
 
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             if (ReferenceEquals(this, Instance))
@@ -23,8 +36,12 @@ namespace SoRR
             }
         }
 
+        /// <summary>
+        ///   <para>Gets the <see cref="UnityAssetManager"/> singleton instance.</para>
+        /// </summary>
         public static UnityAssetManager Instance { get; } = new UnityAssetManager(ResourcesAPI.ActiveAPI);
 
+        /// <inheritdoc/>
         protected internal override object? LoadNewAssetOrNull(string assetPath)
         {
             UnityEngine.Object? asset = ResourcesApi.Load(assetPath, typeof(UnityEngine.Object));

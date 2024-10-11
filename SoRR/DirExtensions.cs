@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace SoRR
 {
+    /// <summary>
+    ///   <para>Provides a set of extension methods for direction enumerations.</para>
+    /// </summary>
     public static class DirExtensions
     {
         /// <summary>

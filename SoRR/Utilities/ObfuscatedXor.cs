@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 // ReSharper disable PrivateFieldCanBeConvertedToLocalVariable
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace SoRR
 {

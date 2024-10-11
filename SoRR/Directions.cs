@@ -143,9 +143,13 @@ namespace SoRR
     /// </summary>
     public enum Dir4
     {
+        /// <summary>Represents the north, 0° clockwise.</summary>
         North,
+        /// <summary>Represents the east, 90° clockwise.</summary>
         East,
+        /// <summary>Represents the south, 180° clockwise.</summary>
         South,
+        /// <summary>Represents the west, 270° clockwise.</summary>
         West,
     }
     /// <summary>
@@ -153,13 +157,21 @@ namespace SoRR
     /// </summary>
     public enum Dir8
     {
+        /// <summary>Represents the north, 0° clockwise.</summary>
         North,
+        /// <summary>Represents the north-east, 45° clockwise.</summary>
         NorthEast,
+        /// <summary>Represents the east, 90° clockwise.</summary>
         East,
+        /// <summary>Represents the south-east, 135° clockwise.</summary>
         SouthEast,
+        /// <summary>Represents the south, 180° clockwise.</summary>
         South,
+        /// <summary>Represents the south-west, 225° clockwise.</summary>
         SouthWest,
+        /// <summary>Represents the west, 270° clockwise.</summary>
         West,
+        /// <summary>Represents the north-west, 315° clockwise.</summary>
         NorthWest,
     }
     /// <summary>
@@ -168,29 +180,53 @@ namespace SoRR
     public enum Dir24
     {
         // ReSharper disable InconsistentNaming
+        /// <summary>Represents the north, 0° clockwise.</summary>
         N,
+        /// <summary>Represents the north-north-north-east, 15° clockwise.</summary>
         NNNE,
+        /// <summary>Represents the north-north-east, 30° clockwise.</summary>
         NNE,
+        /// <summary>Represents the north-east, 45° clockwise.</summary>
         NE,
+        /// <summary>Represents the north-east-east, 60° clockwise.</summary>
         NEE,
+        /// <summary>Represents the north-east-east-east, 75° clockwise.</summary>
         NEEE,
+        /// <summary>Represents the east, 90° clockwise.</summary>
         E,
+        /// <summary>Represents the south-east-east-east, 105° clockwise.</summary>
         SEEE,
+        /// <summary>Represents the south-east-east, 120° clockwise.</summary>
         SEE,
+        /// <summary>Represents the south-east, 135° clockwise.</summary>
         SE,
+        /// <summary>Represents the south-south-east, 150° clockwise.</summary>
         SSE,
+        /// <summary>Represents the south-south-south-east, 165° clockwise.</summary>
         SSSE,
+        /// <summary>Represents the south, 180° clockwise.</summary>
         S,
+        /// <summary>Represents the south-south-south-west, 195° clockwise.</summary>
         SSSW,
+        /// <summary>Represents the south-south-west, 210° clockwise.</summary>
         SSW,
+        /// <summary>Represents the south-west, 225° clockwise.</summary>
         SW,
+        /// <summary>Represents the south-west-west, 240° clockwise.</summary>
         SWW,
+        /// <summary>Represents the south-west-west-west, 255° clockwise.</summary>
         SWWW,
+        /// <summary>Represents the west, 270° clockwise.</summary>
         W,
+        /// <summary>Represents the north-west-west-west, 285° clockwise.</summary>
         NWWW,
+        /// <summary>Represents the north-west-west, 300° clockwise.</summary>
         NWW,
+        /// <summary>Represents the north-west, 315° clockwise.</summary>
         NW,
+        /// <summary>Represents the north-north-west, 330° clockwise.</summary>
         NNW,
+        /// <summary>Represents the north-north-north-west, 345° clockwise.</summary>
         NNNW,
         // ReSharper restore InconsistentNaming
     }

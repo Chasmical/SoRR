@@ -11,6 +11,10 @@ using System.Runtime.InteropServices;
 
 namespace SoRR
 {
+    /// <summary>
+    ///   <para>Represents a collection of <see cref="string"/> keys and <typeparamref name="TValue"/> values.<br/>Provides methods that use read-only spans of characters, mimicking the functionality of alternate lookups in .NET 9.</para>
+    /// </summary>
+    /// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>
     [DebuggerDisplay("Count = {Count}")]
     [Serializable]
     public sealed class StringKeyedDictionary<TValue>
@@ -23,17 +27,20 @@ namespace SoRR
         private bool usesRandomizedHash;
         private const int StartOfFreeList = -3;
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}()"/>
         public StringKeyedDictionary() : this(0) { }
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}(int)"/>
         public StringKeyedDictionary(int capacity)
         {
             if (capacity < 0) throw new ArgumentOutOfRangeException(nameof(capacity));
             if (capacity > 0) Initialize(capacity);
         }
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.Count"/>
         public int Count => _count - _freeCount;
-        public int Capacity => _entries?.Length ?? 0;
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.this[TKey]"/>
         public TValue this[string key]
         {
             get
@@ -45,9 +52,11 @@ namespace SoRR
             set => TryInsert(key, value, InsertionBehavior.OverwriteExisting);
         }
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.Add"/>
         public void Add(string key, TValue value)
             => TryInsert(key, value, InsertionBehavior.ThrowOnExisting);
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.Clear"/>
         public void Clear()
         {
             int count = _count;
@@ -61,8 +70,10 @@ namespace SoRR
             }
         }
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.ContainsKey"/>
         public bool ContainsKey(string key) =>
             !Unsafe.IsNullRef(ref FindValue(key));
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.ContainsKey"/>
         public bool ContainsKey(ReadOnlySpan<char> key) =>
             !Unsafe.IsNullRef(ref FindValue(key));
 
@@ -73,7 +84,7 @@ namespace SoRR
             ref Entry entry = ref Unsafe.NullRef<Entry>();
             if (_buckets != null)
             {
-                uint hashCode = DictHasher.ComputeHash(key, usesRandomizedHash);
+                uint hashCode = StringKeyedDictionaryHelper.ComputeHash(key, usesRandomizedHash);
                 int i = GetBucket(hashCode);
                 Entry[]? entries = _entries;
                 uint collisionCount = 0;
@@ -109,7 +120,7 @@ namespace SoRR
             ref Entry entry = ref Unsafe.NullRef<Entry>();
             if (_buckets != null)
             {
-                uint hashCode = DictHasher.ComputeHash(key, usesRandomizedHash);
+                uint hashCode = StringKeyedDictionaryHelper.ComputeHash(key, usesRandomizedHash);
                 int i = GetBucket(hashCode);
                 Entry[]? entries = _entries;
                 uint collisionCount = 0;
@@ -144,7 +155,7 @@ namespace SoRR
 
         private int Initialize(int capacity)
         {
-            int size = DictHasher.GetPrime(capacity);
+            int size = StringKeyedDictionaryHelper.GetPrime(capacity);
             int[] buckets = new int[size];
             Entry[] entries = new Entry[size];
             _freeList = -1;
@@ -159,7 +170,7 @@ namespace SoRR
             if (_buckets == null) Initialize(0);
             Entry[] entries = _entries!;
 
-            uint hashCode = DictHasher.ComputeHash(key, usesRandomizedHash);
+            uint hashCode = StringKeyedDictionaryHelper.ComputeHash(key, usesRandomizedHash);
             uint collisionCount = 0;
             ref int bucket = ref GetBucket(hashCode);
             int i = bucket - 1;
@@ -211,13 +222,13 @@ namespace SoRR
             entry.key = key;
             entry.value = value;
             bucket = index + 1;
-            if (collisionCount > DictHasher.HashCollisionThreshold && !usesRandomizedHash)
+            if (collisionCount > StringKeyedDictionaryHelper.HashCollisionThreshold && !usesRandomizedHash)
                 Resize(entries.Length, true);
             return true;
         }
 
         private void Resize()
-            => Resize(DictHasher.ExpandPrime(_count), false);
+            => Resize(StringKeyedDictionaryHelper.ExpandPrime(_count), false);
         private void Resize(int newSize, bool forceNewHashCodes)
         {
             Entry[] entries = new Entry[newSize];
@@ -242,11 +253,14 @@ namespace SoRR
             _entries = entries;
         }
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.Remove(TKey)"/>
         public bool Remove(string key)
             => Remove(key, out _);
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.Remove(TKey)"/>
         public bool Remove(ReadOnlySpan<char> key)
             => Remove(key, out _);
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.Remove(TKey, out TValue)"/>
         public bool Remove(string key, [MaybeNullWhen(false)] out TValue value)
         {
             if (key is null) throw new ArgumentNullException(nameof(key));
@@ -254,7 +268,7 @@ namespace SoRR
             if (_buckets != null)
             {
                 uint collisionCount = 0;
-                uint hashCode = DictHasher.ComputeHash(key, usesRandomizedHash);
+                uint hashCode = StringKeyedDictionaryHelper.ComputeHash(key, usesRandomizedHash);
                 ref int bucket = ref GetBucket(hashCode);
                 Entry[]? entries = _entries;
                 int last = -1;
@@ -288,12 +302,13 @@ namespace SoRR
             value = default;
             return false;
         }
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.Remove(TKey, out TValue)"/>
         public bool Remove(ReadOnlySpan<char> key, [MaybeNullWhen(false)] out TValue value)
         {
             if (_buckets != null)
             {
                 uint collisionCount = 0;
-                uint hashCode = DictHasher.ComputeHash(key, usesRandomizedHash);
+                uint hashCode = StringKeyedDictionaryHelper.ComputeHash(key, usesRandomizedHash);
                 ref int bucket = ref GetBucket(hashCode);
                 Entry[]? entries = _entries;
                 int last = -1;
@@ -330,6 +345,7 @@ namespace SoRR
             return false;
         }
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.TryGetValue(TKey, out TValue)"/>
         public bool TryGetValue(string key, [MaybeNullWhen(false)] out TValue value)
         {
             ref TValue valRef = ref FindValue(key);
@@ -341,6 +357,7 @@ namespace SoRR
             value = default;
             return false;
         }
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.TryGetValue(TKey, out TValue)"/>
         public bool TryGetValue(ReadOnlySpan<char> key, [MaybeNullWhen(false)] out TValue value)
         {
             ref TValue valRef = ref FindValue(key);
@@ -353,9 +370,11 @@ namespace SoRR
             return false;
         }
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.TryAdd(TKey, TValue)"/>
         public bool TryAdd(string key, TValue value)
             => TryInsert(key, value, InsertionBehavior.None);
 
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.EnsureCapacity(int)"/>
         public int EnsureCapacity(int capacity)
         {
             if (capacity < 0) throw new ArgumentOutOfRangeException(nameof(capacity));
@@ -364,16 +383,18 @@ namespace SoRR
             if (currentCapacity >= capacity) return currentCapacity;
             if (_buckets == null) return Initialize(capacity);
 
-            int newSize = DictHasher.GetPrime(capacity);
+            int newSize = StringKeyedDictionaryHelper.GetPrime(capacity);
             Resize(newSize, false);
             return newSize;
         }
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.TrimExcess()"/>
         public void TrimExcess() => TrimExcess(Count);
+        /// <inheritdoc cref="Dictionary{TKey,TValue}.TrimExcess(int)"/>
         public void TrimExcess(int capacity)
         {
             if (capacity < Count) throw new ArgumentOutOfRangeException(nameof(capacity));
 
-            int newSize = DictHasher.GetPrime(capacity);
+            int newSize = StringKeyedDictionaryHelper.GetPrime(capacity);
             Entry[]? oldEntries = _entries;
             int currentCapacity = oldEntries?.Length ?? 0;
             if (newSize >= currentCapacity) return;
@@ -425,7 +446,7 @@ namespace SoRR
             ThrowOnExisting = 2,
         }
     }
-    internal static class DictHasher
+    internal static class StringKeyedDictionaryHelper
     {
         public const uint HashCollisionThreshold = 100;
 

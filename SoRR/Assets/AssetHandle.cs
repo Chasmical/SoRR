@@ -30,6 +30,8 @@ namespace SoRR
 
         internal AssetHandle(AssetManager assetManager, string relativePath, object? currentValue)
         {
+            Debug.Assert(assetManager is not null && relativePath is not null);
+
             AssetManager = assetManager;
             RelativePath = relativePath;
             value = currentValue;

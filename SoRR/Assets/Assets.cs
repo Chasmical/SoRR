@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using Chasm.Utilities;
 
 namespace SoRR
 {
@@ -17,6 +18,11 @@ namespace SoRR
         /// <param name="prefix">The global prefix to register the specified asset <paramref name="manager"/> under.</param>
         public static void RegisterAssetManager(AssetManager manager, string prefix)
         {
+            if (manager is null) throw new ArgumentNullException(nameof(manager));
+            if (prefix is null) throw new ArgumentNullException(nameof(prefix));
+            if (manager.registeredPrefix is not null)
+                throw new ArgumentException("The specified manager already has a registered prefix.", nameof(manager));
+
             managers.Add(prefix, manager);
             manager.registeredPrefix = prefix;
         }
@@ -25,9 +31,9 @@ namespace SoRR
         /// </summary>
         /// <param name="manager">The asset manager to remove from the global registry.</param>
         /// <returns><see langword="true"/>, if the specified asset <paramref name="manager"/> was successfully removed; otherwise, <see langword="false"/>.</returns>
-        public static bool UnRegisterAssetManager(AssetManager manager)
+        public static bool UnRegisterAssetManager([NotNullWhen(true)] AssetManager? manager)
         {
-            if (manager.registeredPrefix is not null && managers.Remove(manager.registeredPrefix))
+            if (manager?.registeredPrefix is not null && managers.Remove(manager.registeredPrefix))
             {
                 manager.registeredPrefix = null;
                 return true;
@@ -40,8 +46,12 @@ namespace SoRR
         /// </summary>
         /// <param name="fullPath">A fully qualified path to the asset to get the handle of.</param>
         /// <returns>The handle for the specified asset, or <see langword="null"/> if it is not found.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="fullPath"/> is <see langword="null"/>.</exception>
         public static AssetHandle? GetHandle(string fullPath)
-            => GetHandle(fullPath.AsSpan());
+        {
+            if (fullPath is null) throw new ArgumentNullException(nameof(fullPath));
+            return GetHandle(fullPath.AsSpan());
+        }
         /// <summary>
         ///   <para>Returns the handle for an asset at the specified <paramref name="fullPath"/>.</para>
         /// </summary>
@@ -61,10 +71,14 @@ namespace SoRR
         /// <typeparam name="T">The type of the asset to load.</typeparam>
         /// <param name="fullPath">A fully qualified path to the asset to load.</param>
         /// <returns>The specified asset.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="fullPath"/> is <see langword="null"/>.</exception>
         /// <exception cref="AssetNotFoundException">An asset at the specified <paramref name="fullPath"/> could not be found.</exception>
         /// <exception cref="InvalidCastException">An asset at the specified <paramref name="fullPath"/> could not be cast to type <typeparamref name="T"/>.</exception>
         public static T? Load<T>(string fullPath)
-            => Load<T>(fullPath.AsSpan());
+        {
+            if (fullPath is null) throw new ArgumentNullException(nameof(fullPath));
+            return Load<T>(fullPath.AsSpan());
+        }
         /// <summary>
         ///   <para>Loads an asset at the specified <paramref name="fullPath"/> and returns it.</para>
         /// </summary>
@@ -89,7 +103,10 @@ namespace SoRR
         /// <param name="asset">When this method returns, contains the specified asset, if it was successfully loaded, or <see langword="default"/> if it could not be loaded.</param>
         /// <returns><see langword="true"/>, if the specified asset was successfully loaded; otherwise, <see langword="false"/>.</returns>
         public static bool TryLoad<T>(string fullPath, [NotNullWhen(true)] out T? asset)
-            => TryLoad(fullPath.AsSpan(), out asset);
+        {
+            if (fullPath is null) return Util.Fail(out asset);
+            return TryLoad(fullPath.AsSpan(), out asset);
+        }
         /// <summary>
         ///   <para>Tries to load an asset at the specified <paramref name="fullPath"/>, and returns a value indicating whether the operation was successful.</para>
         /// </summary>

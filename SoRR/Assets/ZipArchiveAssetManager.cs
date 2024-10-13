@@ -29,6 +29,9 @@ namespace SoRR
         /// </summary>
         /// <param name="archivePath">A path to the archive to load assets from.</param>
         /// <exception cref="ArgumentNullException"><paramref name="archivePath"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="archivePath"/> is not a valid file path.</exception>
+        /// <exception cref="NotSupportedException"><paramref name="archivePath"/> contains a colon (":") that is not part of a volume identifier (for example, "c:\").</exception>
+        /// <exception cref="PathTooLongException">The specified path, file name, or both exceed the system-defined maximum length.</exception>
         public ZipArchiveAssetManager(string archivePath)
         {
             if (archivePath is null) throw new ArgumentNullException(nameof(archivePath));
@@ -100,14 +103,7 @@ namespace SoRR
         /// <inheritdoc/>
         protected override IExternalAssetInfo? GetAssetInfo(string assetPath)
         {
-            IReadOnlyDictionary<string, AssetInfo>? lookup = _lookup;
-            if (lookup is null)
-                lock (stateLock)
-                {
-                    lookup = _lookup;
-                    if (lookup is null) _lookup = lookup = CreateLookup();
-                }
-
+            var lookup = Locked.Get(ref _lookup, stateLock, CreateLookup);
             return lookup.TryGetValue(assetPath, out AssetInfo info) ? info : null;
         }
 

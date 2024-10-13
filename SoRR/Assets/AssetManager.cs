@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using Chasm.Utilities;
 using UnityEngine;
 
 namespace SoRR
@@ -132,10 +133,14 @@ namespace SoRR
         /// <typeparam name="T">The type of the asset to load.</typeparam>
         /// <param name="path">A relative path to the asset to load.</param>
         /// <returns>The specified asset.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="path"/> is <see langword="null"/>.</exception>
         /// <exception cref="AssetNotFoundException">An asset at the specified <paramref name="path"/> could not be found.</exception>
         /// <exception cref="InvalidCastException">An asset at the specified <paramref name="path"/> could not be cast to type <typeparamref name="T"/>.</exception>
         public T? Load<T>(string path)
-            => LoadAssetCore<T>(path, path, true);
+        {
+            if (path is null) throw new ArgumentNullException(nameof(path));
+            return LoadAssetCore<T>(path, path, true);
+        }
         /// <summary>
         ///   <para>Loads an asset at the specified <paramref name="path"/> and returns it.</para>
         /// </summary>
@@ -155,7 +160,10 @@ namespace SoRR
         /// <param name="asset">When this method returns, contains the specified asset, if it was successfully loaded, or <see langword="default"/> if it could not be loaded.</param>
         /// <returns><see langword="true"/>, if the specified asset was successfully loaded; otherwise, <see langword="false"/>.</returns>
         public bool TryLoad<T>(string path, [NotNullWhen(true)] out T? asset)
-            => (asset = LoadAssetCore<T>(path, path, false)) is not null;
+        {
+            if (path is null) return Util.Fail(out asset);
+            return (asset = LoadAssetCore<T>(path, path, false)) is not null;
+        }
         /// <summary>
         ///   <para>Tries to load an asset at the specified <paramref name="path"/>, and returns a value indicating whether the operation was successful.</para>
         /// </summary>

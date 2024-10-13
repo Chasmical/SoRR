@@ -21,6 +21,9 @@ namespace SoRR
         /// </summary>
         /// <param name="directoryPath">A path to the directory to load assets from.</param>
         /// <exception cref="ArgumentNullException"><paramref name="directoryPath"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="directoryPath"/> is not a valid directory path.</exception>
+        /// <exception cref="NotSupportedException"><paramref name="directoryPath"/> contains a colon (":") that is not part of a volume identifier (for example, "c:\").</exception>
+        /// <exception cref="PathTooLongException">The specified path, file name, or both exceed the system-defined maximum length.</exception>
         public FileSystemAssetManager(string directoryPath)
         {
             if (directoryPath is null) throw new ArgumentNullException(nameof(directoryPath));

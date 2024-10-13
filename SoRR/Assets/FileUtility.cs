@@ -34,6 +34,8 @@ namespace SoRR
 
         [Pure] public static IEnumerable<string> SearchFiles(string directoryPath, string pathWithoutExtension)
         {
+            if (!Directory.Exists(directoryPath)) yield break;
+
             string nameWithoutExtension = Path.GetFileName(pathWithoutExtension);
 
             foreach (string filePath in Directory.EnumerateFiles(directoryPath, pathWithoutExtension + ".*"))

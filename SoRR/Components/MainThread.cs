@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Chasm.Utilities;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -35,6 +36,37 @@ namespace SoRR
             queue.Enqueue(action);
         }
 
+        /// <summary>
+        ///   <para>Enqueues the specified <paramref name="action"/> to run on the main Unity thread and returns a <see cref="Task"/> that represents it.</para>
+        /// </summary>
+        /// <param name="action">The action to run on the main Unity thread.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
+        /// <returns>A task representing the specified <paramref name="action"/> queued to execute on the main Unity thread.</returns>
+        [MustUseReturnValue] public static Task RunAsync(Action action)
+        {
+            if (action is null) throw new ArgumentNullException(nameof(action));
+            return RunAsync<object?>(() => { action(); return null; });
+        }
+        /// <summary>
+        ///   <para>Enqueues the specified <paramref name="function"/> to run on the main Unity thread and returns a <see cref="Task{T}"/> that represents it.</para>
+        /// </summary>
+        /// <param name="function">The function to run on the main Unity thread.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="function"/> is <see langword="null"/>.</exception>
+        /// <returns>A task representing the specified <paramref name="function"/> queued to execute on the main Unity thread.</returns>
+        [MustUseReturnValue] public static Task<T> RunAsync<T>(Func<T> function)
+        {
+            Task.Run(function);
+            if (function is null) throw new ArgumentNullException(nameof(function));
+            TaskCompletionSource<T> tcs = new();
+
+            Enqueue(() =>
+            {
+                try { tcs.SetResult(function()); }
+                catch (Exception ex) { tcs.SetException(ex); }
+            });
+
+            return tcs.Task;
+        }
 
         /// <summary>
         ///   <para>Represents a component responsible for querying and executing the queue of tasks scheduled to run on the main Unity thread.</para>

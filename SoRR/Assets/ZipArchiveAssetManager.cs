@@ -24,6 +24,26 @@ namespace SoRR
         private ZipArchive? _archive;
         private IReadOnlyDictionary<string, AssetInfo>? _lookup;
 
+        private FileSystemWatcher? _watcher;
+        private bool observeChanges = true;
+        /// <summary>
+        ///   <para>Gets or sets whether the changes in the archive file should trigger a reload.</para>
+        /// </summary>
+        public bool ObserveChanges
+        {
+            get => observeChanges;
+            set
+            {
+                if (observeChanges == value) return;
+                lock (stateLock)
+                {
+                    observeChanges = value;
+                    if (value) CreateWatcher();
+                    else DisposeWatcher();
+                }
+            }
+        }
+
         /// <summary>
         ///   <para>Initializes a new instance of the <see cref="ZipArchiveAssetManager"/> class with the specified <paramref name="archivePath"/>.</para>
         /// </summary>
@@ -44,31 +64,23 @@ namespace SoRR
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            Interlocked.Exchange(ref _archive, null)?.Dispose();
+            DisposeArchive();
+            DisposeWatcher();
             _lookup = null;
         }
-
-        private void InitArchive()
+        /// <inheritdoc/>
+        protected override IExternalAssetInfo? GetAssetInfo(string assetPath)
         {
-            Debug.Assert(_archive is null);
-            Debug.Assert(Monitor.IsEntered(stateLock));
-
-            try
-            {
-                MemoryStream memory = new(File.ReadAllBytes(ArchivePath));
-                _archive = new ZipArchive(memory, ZipArchiveMode.Read);
-            }
-            catch
-            {
-                // If the file doesn't exist, or if there's a file-sharing error, set to null
-                _archive = null;
-            }
+            var lookup = Locked.Get(ref _lookup, stateLock, InitializeLookup);
+            return lookup.TryGetValue(assetPath, out AssetInfo info) ? info : null;
         }
 
-        private IReadOnlyDictionary<string, AssetInfo> CreateLookup()
+        private IReadOnlyDictionary<string, AssetInfo> InitializeLookup()
         {
-            Debug.Assert(_lookup is null);
             Debug.Assert(Monitor.IsEntered(stateLock));
+
+            // Before reading, ensure the archive file is being watched, if so specified
+            if (observeChanges && _watcher is null) CreateWatcher();
 
             // Try to read the archive file
             if (_archive is null) InitArchive();
@@ -81,7 +93,7 @@ namespace SoRR
                 {
                     string assetPath = entry.FullName;
                     ReadOnlySpan<char> assetExtension = Path.GetExtension(assetPath.AsSpan());
-                    if (assetExtension is ".meta") continue;
+                    if (assetExtension is "" or ".meta") continue;
 
                     string declaredName = assetPath[..^assetExtension.Length];
 
@@ -100,16 +112,82 @@ namespace SoRR
             return lookup;
         }
 
-        /// <inheritdoc/>
-        protected override IExternalAssetInfo? GetAssetInfo(string assetPath)
+        private void InitArchive()
         {
-            var lookup = Locked.Get(ref _lookup, stateLock, CreateLookup);
-            return lookup.TryGetValue(assetPath, out AssetInfo info) ? info : null;
+            Debug.Assert(_archive is null);
+            Debug.Assert(Monitor.IsEntered(stateLock));
+
+            try
+            {
+                MemoryStream memory = new(File.ReadAllBytes(ArchivePath));
+                _archive = new ZipArchive(memory, ZipArchiveMode.Read);
+            }
+            catch
+            {
+                // If the file doesn't exist, or if there's a file-sharing error, set to null
+                _archive = null;
+            }
+        }
+        private void DisposeArchive()
+        {
+            Interlocked.Exchange(ref _archive, null)?.Dispose();
+        }
+
+        private void CreateWatcher()
+        {
+            Debug.Assert(_watcher is null);
+            Debug.Assert(Monitor.IsEntered(stateLock));
+
+            _watcher = new FileSystemWatcher(Path.GetDirectoryName(ArchivePath)!, Path.GetFileName(ArchivePath));
+
+            FileSystemEventHandler handler = HandleChangedFile;
+            _watcher.Changed += handler;
+            _watcher.Created += handler;
+            _watcher.Deleted += handler;
+            _watcher.Renamed += new RenamedEventHandler(handler);
+
+            _watcher.EnableRaisingEvents = true;
+        }
+        private void DisposeWatcher()
+        {
+            Interlocked.Exchange(ref _archive, null)?.Dispose();
+        }
+
+        private void HandleChangedFile(object sender, FileSystemEventArgs args)
+        {
+            if (sender != _watcher) return;
+
+            lock (stateLock)
+            {
+                var oldLookup = _lookup;
+                // If the lookup hasn't been initialized yet, then there aren't any assets that need reloading
+                if (oldLookup is null) return;
+
+                // Dispose the archive, and reinitialize archive and lookup
+                DisposeArchive();
+                var newLookup = InitializeLookup();
+                _lookup = newLookup;
+
+                // Enqueue the asset reloading on the main thread
+                MainThread.Enqueue(() =>
+                {
+                    foreach (var (path, oldAsset) in oldLookup)
+                    {
+                        // If the asset was removed or its Crc32 changed, trigger a reload
+                        if (!newLookup.TryGetValue(path, out AssetInfo newAsset) || newAsset.Crc32 != oldAsset.Crc32)
+                        {
+                            ReloadAssetPath(path);
+                        }
+                    }
+                });
+            }
         }
 
         private readonly struct AssetInfo(ZipArchiveEntry assetEntry, ZipArchiveEntry? metadataEntry) : IExternalAssetInfo
         {
+            public uint Crc32 => assetEntry.Crc32;
             public AssetFormat Format => AssetUtility.DetectFormat(assetEntry.FullName);
+
             [MustDisposeResource]
             public Stream OpenAsset() => assetEntry.Open();
             [MustDisposeResource]

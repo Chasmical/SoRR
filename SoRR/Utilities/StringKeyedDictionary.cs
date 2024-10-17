@@ -153,6 +153,46 @@ namespace SoRR
             goto Return;
         }
 
+        public string? FindKey(ReadOnlySpan<char> key)
+        {
+            string? res;
+            if (_buckets != null)
+            {
+                uint hashCode = StringKeyedDictionaryHelper.ComputeHash(key, usesRandomizedHash);
+                int i = GetBucket(hashCode);
+                Entry[]? entries = _entries;
+                uint collisionCount = 0;
+                i--;
+                do
+                {
+                    if ((uint)i >= (uint)entries!.Length)
+                        goto ReturnNotFound;
+
+                    ref Entry entry = ref entries[i];
+                    if (entry.hashCode == hashCode && key.SequenceEqual(entry.key))
+                    {
+                        res = entry.key;
+                        goto Return;
+                    }
+
+                    i = entry.next;
+                    collisionCount++;
+                } while (collisionCount <= (uint)entries.Length);
+                goto ConcurrentOperation;
+            }
+
+            goto ReturnNotFound;
+
+        ConcurrentOperation:
+            throw new InvalidOperationException("Concurrent operations are not supported.");
+        ReturnNotFound:
+            res = null;
+        Return:
+            return res;
+        }
+        public bool TryGetKey(ReadOnlySpan<char> key, [NotNullWhen(true)] out string? keyString)
+            => (keyString = FindKey(key)) is not null;
+
         private int Initialize(int capacity)
         {
             int size = StringKeyedDictionaryHelper.GetPrime(capacity);

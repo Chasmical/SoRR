@@ -20,13 +20,39 @@ namespace SoRR
         /// </summary>
         public int Version { get; private set; }
 
-        private object? value;
+        private object? _value;
+        private bool assetLoadError;
         private ValueSparseCollection<Action<AssetHandle>> _listenersCollection = new();
 
         /// <summary>
         ///   <para>Gets the asset's current value.</para>
         /// </summary>
-        public object? Value => value ??= AssetManager.LoadNewAssetOrNull(RelativePath);
+        public object? Value
+        {
+            get
+            {
+                if (_value is null && !assetLoadError) TryLoadValue();
+                return _value;
+            }
+            set
+            {
+                _value = value;
+                assetLoadError = value is null;
+            }
+        }
+
+        private void TryLoadValue()
+        {
+            try
+            {
+                _value = AssetManager.LoadNewAssetOrNull(RelativePath);
+            }
+            catch (Exception ex)
+            {
+                // TODO: log the exception
+            }
+            assetLoadError = _value is null;
+        }
 
         internal AssetHandle(AssetManager assetManager, string relativePath, object? currentValue)
         {
@@ -34,7 +60,7 @@ namespace SoRR
 
             AssetManager = assetManager;
             RelativePath = relativePath;
-            value = currentValue;
+            _value = currentValue;
         }
 
         /// <summary>
@@ -60,7 +86,8 @@ namespace SoRR
 
         internal void TriggerReload()
         {
-            value = null;
+            _value = null;
+            assetLoadError = false;
             Version++;
 
             var listeners = _listenersCollection.GetItems();

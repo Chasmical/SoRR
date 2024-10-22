@@ -7,6 +7,7 @@ namespace SoRR
     public sealed class InjectAttribute : Attribute
     {
         public string? Path { get; }
+        public bool? Optional { get; set; }
 
         public InjectAttribute() { }
         public InjectAttribute(string path) => Path = path;

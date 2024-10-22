@@ -26,14 +26,16 @@ namespace SoRR
                 if (field.TryGetCustomAttribute(out InjectAttribute? attr))
                 {
                     IInjectionResolver resolver = new FieldInjectionResolver(field);
-                    list.Add(new InjectionInfo(field.FieldType, attr.Path, resolver));
+                    bool isOptional = attr.Optional ?? field.GetNullability() == Nullability.Nullable;
+                    list.Add(new InjectionInfo(field.FieldType, attr.Path, resolver, isOptional));
                 }
 
             foreach (PropertyInfo property in type.GetProperties(anyFlags))
                 if (property.TryGetCustomAttribute(out InjectAttribute? attr))
                 {
                     IInjectionResolver resolver = new PropertyInjectionResolver(property);
-                    list.Add(new InjectionInfo(property.PropertyType, attr.Path, resolver));
+                    bool isOptional = attr.Optional ?? property.GetNullability() == Nullability.Nullable;
+                    list.Add(new InjectionInfo(property.PropertyType, attr.Path, resolver, isOptional));
                 }
 
             return list.ToArray();
@@ -54,12 +56,14 @@ namespace SoRR
         private readonly string[] pathParts;
         public ReadOnlySpan<string> Path => pathParts;
         public IInjectionResolver Resolver { get; }
+        public bool IsOptional { get; }
 
-        public InjectionInfo(Type typeToken, string? path, IInjectionResolver resolver)
+        public InjectionInfo(Type typeToken, string? path, IInjectionResolver resolver, bool isOptional)
         {
             TypeToken = typeToken;
             pathParts = path?.Split('/') ?? [];
             Resolver = resolver;
+            IsOptional = isOptional;
         }
     }
 }

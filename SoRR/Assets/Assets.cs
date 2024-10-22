@@ -18,8 +18,8 @@ namespace SoRR
         /// <param name="prefix">The global prefix to register the specified asset <paramref name="manager"/> under.</param>
         public static void RegisterAssetManager(AssetManager manager, string prefix)
         {
-            if (manager is null) throw new ArgumentNullException(nameof(manager));
-            if (prefix is null) throw new ArgumentNullException(nameof(prefix));
+            Guard.ThrowIfNull(manager);
+            Guard.ThrowIfNull(prefix);
             if (manager.registeredPrefix is not null)
                 throw new ArgumentException("The specified manager already has a registered prefix.", nameof(manager));
 
@@ -49,7 +49,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="fullPath"/> is <see langword="null"/>.</exception>
         public static AssetHandle? GetHandle(string fullPath)
         {
-            if (fullPath is null) throw new ArgumentNullException(nameof(fullPath));
+            Guard.ThrowIfNull(fullPath);
             return GetHandle(fullPath.AsSpan());
         }
         /// <summary>
@@ -76,7 +76,7 @@ namespace SoRR
         /// <exception cref="InvalidCastException">An asset at the specified <paramref name="fullPath"/> could not be cast to type <typeparamref name="T"/>.</exception>
         public static T? Load<T>(string fullPath)
         {
-            if (fullPath is null) throw new ArgumentNullException(nameof(fullPath));
+            Guard.ThrowIfNull(fullPath);
             return Load<T>(fullPath.AsSpan());
         }
         /// <summary>

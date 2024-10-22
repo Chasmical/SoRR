@@ -65,7 +65,7 @@ namespace SoRR
 
         private AssetHandle? GetHandleCore(ReadOnlySpan<char> path, string? pathString)
         {
-            if (disposed) throw new ObjectDisposedException(ToString());
+            Guard.ThrowIfDisposed(disposed, this);
 
             // TODO: add warning logs here, instead of handling it like it's okay
             if (path.IndexOf('\\') >= 0)
@@ -138,7 +138,7 @@ namespace SoRR
         /// <exception cref="InvalidCastException">An asset at the specified <paramref name="path"/> could not be cast to type <typeparamref name="T"/>.</exception>
         public T? Load<T>(string path)
         {
-            if (path is null) throw new ArgumentNullException(nameof(path));
+            Guard.ThrowIfNull(path);
             return LoadAssetCore<T>(path, path, true);
         }
         /// <summary>

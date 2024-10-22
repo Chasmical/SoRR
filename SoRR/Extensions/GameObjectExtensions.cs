@@ -17,7 +17,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="gameObject"/> is <see langword="null"/>.</exception>
         public static T GetOrAddComponent<T>(this GameObject gameObject) where T : Component
         {
-            if (gameObject is null) throw new ArgumentNullException(nameof(gameObject));
+            Guard.ThrowIfNull(gameObject);
             return gameObject.TryGetComponent(out T component) ? component : gameObject.AddComponent<T>();
         }
         /// <summary>
@@ -29,7 +29,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="gameObject"/> is <see langword="null"/>.</exception>
         public static Component GetOrAddComponent(this GameObject gameObject, Type componentType)
         {
-            if (gameObject is null) throw new ArgumentNullException(nameof(gameObject));
+            Guard.ThrowIfNull(gameObject);
             return gameObject.TryGetComponent(componentType, out Component component) ? component : gameObject.AddComponent(componentType);
         }
 

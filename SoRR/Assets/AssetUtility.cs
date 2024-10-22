@@ -35,8 +35,8 @@ namespace SoRR
         /// <exception cref="ArgumentException"><paramref name="rawData"/> does not contain valid image data.</exception>
         [Pure] public static Sprite CreateSprite(byte[] rawData, Rect region, float ppu = 64f)
         {
-            if (rawData is null) throw new ArgumentNullException(nameof(rawData));
-            if (ppu <= 0f) throw new ArgumentOutOfRangeException(nameof(ppu), ppu, $"{nameof(ppu)} is less than or equal to 0.");
+            Guard.ThrowIfNull(rawData);
+            Guard.ThrowIfNegativeOrZero(ppu);
 
             Texture2D texture = new Texture2D(2, 3);
             if (!texture.LoadImage(rawData, false))
@@ -57,7 +57,7 @@ namespace SoRR
         /// <exception cref="FormatException">The specified audio's format could not be identified.</exception>
         [Pure] public static async Task<AudioClip> CreateAudioClipAsync(byte[] rawData)
         {
-            if (rawData is null) throw new ArgumentNullException(nameof(rawData));
+            Guard.ThrowIfNull(rawData);
 
             AudioType format = DetectAudioFormat(rawData);
             if (format == AudioType.UNKNOWN) throw new FormatException("The audio file's format could not be identified.");
@@ -95,7 +95,7 @@ namespace SoRR
         /// TODO: path and file exceptions
         [Pure] public static Task<AudioClip> CreateAudioClipAsync(string filePath, AudioType format)
         {
-            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
+            Guard.ThrowIfNull(filePath);
             filePath = Path.GetFullPath(filePath);
 
             if (format == AudioType.UNKNOWN)

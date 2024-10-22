@@ -21,7 +21,7 @@ namespace SoRR
         /// TODO: path, file and json exceptions
         [MustUseReturnValue] public static T? ReadJson<T>(string filePath)
         {
-            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
+            Guard.ThrowIfNull(filePath);
             return ReadJson<T>(File.OpenRead(filePath));
         }
         /// <summary>
@@ -35,7 +35,7 @@ namespace SoRR
         /// TODO: json exceptions
         [MustUseReturnValue] public static T? ReadJson<T>([HandlesResourceDisposal] Stream stream)
         {
-            if (stream is null) throw new ArgumentNullException(nameof(stream));
+            Guard.ThrowIfNull(stream);
 
             using (stream)
             using (StreamReader reader = new StreamReader(stream))
@@ -53,7 +53,7 @@ namespace SoRR
         /// TODO: path, file and json exceptions
         public static void WriteJson<T>(string filePath, T? value)
         {
-            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
+            Guard.ThrowIfNull(filePath);
             WriteJson(File.Create(filePath), value);
         }
         /// <summary>
@@ -67,7 +67,7 @@ namespace SoRR
         /// TODO: json exceptions
         public static void WriteJson<T>([HandlesResourceDisposal] Stream stream, T? value)
         {
-            if (stream is null) throw new ArgumentNullException(nameof(stream));
+            Guard.ThrowIfNull(stream);
 
             using (stream)
             using (StreamWriter writer = new StreamWriter(stream))
@@ -84,8 +84,8 @@ namespace SoRR
         /// TODO: path exceptions
         [Pure] public static IEnumerable<string> SearchFiles(string directoryPath, string pathWithoutExtension)
         {
-            if (directoryPath is null) throw new ArgumentNullException(nameof(directoryPath));
-            if (pathWithoutExtension is null) throw new ArgumentNullException(nameof(pathWithoutExtension));
+            Guard.ThrowIfNull(directoryPath);
+            Guard.ThrowIfNull(pathWithoutExtension);
             if (!Directory.Exists(directoryPath)) yield break;
 
             string nameWithoutExtension = Path.GetFileName(pathWithoutExtension);

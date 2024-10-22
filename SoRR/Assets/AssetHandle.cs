@@ -70,7 +70,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="listener"/> is <see langword="null"/>.</exception>
         public void AddListener(Action<AssetHandle> listener)
         {
-            if (listener is null) throw new ArgumentNullException(nameof(listener));
+            Guard.ThrowIfNull(listener);
             _listeners.Add(listener);
         }
         /// <summary>
@@ -80,7 +80,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="listener"/> is <see langword="null"/>.</exception>
         public void RemoveListener(Action<AssetHandle> listener)
         {
-            if (listener is null) throw new ArgumentNullException(nameof(listener));
+            Guard.ThrowIfNull(listener);
             _listeners.Remove(listener);
         }
 

@@ -22,7 +22,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="resourcesApi"/> is <see langword="null"/>.</exception>
         public UnityAssetManager(ResourcesAPI resourcesApi)
         {
-            if (resourcesApi is null) throw new ArgumentNullException(nameof(resourcesApi));
+            Guard.ThrowIfNull(resourcesApi);
             ResourcesApi = resourcesApi;
         }
 

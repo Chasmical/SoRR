@@ -54,10 +54,8 @@ namespace SoRR
         /// <exception cref="PathTooLongException">The specified path, file name, or both exceed the system-defined maximum length.</exception>
         public ZipArchiveAssetManager(string archivePath)
         {
-            if (archivePath is null) throw new ArgumentNullException(nameof(archivePath));
+            Guard.ThrowIfNull(archivePath);
             ArchivePath = Path.GetFullPath(archivePath);
-
-            // TODO: implement the archive file watcher
         }
 
         /// <inheritdoc/>

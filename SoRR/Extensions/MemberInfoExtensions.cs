@@ -72,7 +72,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="field"/> is <see langword="null"/>.</exception>
         [Pure] public static Nullability GetNullability(this FieldInfo field)
         {
-            if (field is null) throw new ArgumentNullException(nameof(field));
+            Guard.ThrowIfNull(field);
             return GetNullabilityCore(field.FieldType, field.DeclaringType, field.GetCustomAttributesData());
         }
         /// <summary>
@@ -83,7 +83,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="property"/> is <see langword="null"/>.</exception>
         [Pure] public static Nullability GetNullability(this PropertyInfo property)
         {
-            if (property is null) throw new ArgumentNullException(nameof(property));
+            Guard.ThrowIfNull(property);
             return GetNullabilityCore(property.PropertyType, property.DeclaringType, property.GetCustomAttributesData());
         }
         /// <summary>
@@ -94,7 +94,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="parameter"/> is <see langword="null"/>.</exception>
         [Pure] public static Nullability GetNullability(this ParameterInfo parameter)
         {
-            if (parameter is null) throw new ArgumentNullException(nameof(parameter));
+            Guard.ThrowIfNull(parameter);
             return GetNullabilityCore(parameter.ParameterType, parameter.Member, parameter.GetCustomAttributesData());
         }
 

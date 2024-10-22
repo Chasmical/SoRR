@@ -31,7 +31,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
         public static void Enqueue(Action action)
         {
-            if (action is null) throw new ArgumentNullException(nameof(action));
+            Guard.ThrowIfNull(action);
             // TODO: log a warning if activeRunner is null or disabled
             queue.Enqueue(action);
         }
@@ -44,7 +44,7 @@ namespace SoRR
         /// <returns>A task representing the specified <paramref name="action"/> queued to execute on the main Unity thread.</returns>
         [MustUseReturnValue] public static Task RunAsync(Action action)
         {
-            if (action is null) throw new ArgumentNullException(nameof(action));
+            Guard.ThrowIfNull(action);
             return RunAsync<object?>(() => { action(); return null; });
         }
         /// <summary>
@@ -55,8 +55,7 @@ namespace SoRR
         /// <returns>A task representing the specified <paramref name="function"/> queued to execute on the main Unity thread.</returns>
         [MustUseReturnValue] public static Task<T> RunAsync<T>(Func<T> function)
         {
-            Task.Run(function);
-            if (function is null) throw new ArgumentNullException(nameof(function));
+            Guard.ThrowIfNull(function);
             TaskCompletionSource<T> tcs = new();
 
             Enqueue(() =>

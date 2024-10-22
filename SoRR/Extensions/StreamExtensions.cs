@@ -18,7 +18,7 @@ namespace SoRR
         /// <exception cref="InvalidOperationException">The <paramref name="stream"/>'s content length did not match the retrieved length.</exception>
         [MustUseReturnValue] public static byte[] ToByteArray(this Stream stream)
         {
-            if (stream is null) throw new ArgumentNullException(nameof(stream));
+            Guard.ThrowIfNull(stream);
 
             if (stream.TryGetLength(out int byteLength))
             {
@@ -41,7 +41,7 @@ namespace SoRR
         /// <exception cref="InvalidOperationException">The <paramref name="stream"/>'s content length did not match the retrieved length.</exception>
         [MustUseReturnValue] public static byte[] ToByteArrayDangerous(this Stream stream)
         {
-            if (stream is null) throw new ArgumentNullException(nameof(stream));
+            Guard.ThrowIfNull(stream);
 
             // If the stream is an exposed MemoryStream, try to use its buffer directly without copying
             if (stream is MemoryStream memory && memory.TryGetBuffer(out ArraySegment<byte> segment))
@@ -63,7 +63,7 @@ namespace SoRR
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> is <see langword="null"/>.</exception>
         [Pure] public static bool TryGetLength(this Stream stream, out int byteLength)
         {
-            if (stream is null) throw new ArgumentNullException(nameof(stream));
+            Guard.ThrowIfNull(stream);
 
             try
             {

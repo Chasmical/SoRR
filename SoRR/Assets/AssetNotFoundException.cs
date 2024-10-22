@@ -23,8 +23,8 @@ namespace SoRR
         /// <param name="path">A relative path to the asset that could not be found.</param>
         public AssetNotFoundException(AssetManager manager, string path)
         {
-            if (manager is null) throw new ArgumentNullException(nameof(manager));
-            if (path is null) throw new ArgumentNullException(nameof(path));
+            Guard.ThrowIfNull(manager);
+            Guard.ThrowIfNull(path);
             Manager = manager;
             Path = path;
         }

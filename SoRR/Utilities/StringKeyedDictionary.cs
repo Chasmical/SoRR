@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 // This class is basically a copy of Dictionary<TKey, TValue>,
 // with everything unnecessary removed, and with added methods
@@ -33,7 +34,7 @@ namespace SoRR
         /// <inheritdoc cref="Dictionary{TKey,TValue}(int)"/>
         public StringKeyedDictionary(int capacity)
         {
-            if (capacity < 0) throw new ArgumentOutOfRangeException(nameof(capacity));
+            Guard.ThrowIfNegative(capacity);
             if (capacity > 0) Initialize(capacity);
         }
 
@@ -79,7 +80,7 @@ namespace SoRR
 
         internal ref TValue FindValue(string key)
         {
-            if (key is null) throw new ArgumentNullException(nameof(key));
+            Guard.ThrowIfNull(key);
 
             ref Entry entry = ref Unsafe.NullRef<Entry>();
             if (_buckets != null)
@@ -206,7 +207,7 @@ namespace SoRR
 
         private bool TryInsert(string key, TValue value, InsertionBehavior behavior)
         {
-            if (key is null) throw new ArgumentNullException(nameof(key));
+            Guard.ThrowIfNull(key);
             if (_buckets == null) Initialize(0);
             Entry[] entries = _entries!;
 
@@ -303,7 +304,7 @@ namespace SoRR
         /// <inheritdoc cref="Dictionary{TKey,TValue}.Remove(TKey, out TValue)"/>
         public bool Remove(string key, [MaybeNullWhen(false)] out TValue value)
         {
-            if (key is null) throw new ArgumentNullException(nameof(key));
+            Guard.ThrowIfNull(key);
 
             if (_buckets != null)
             {
@@ -417,7 +418,7 @@ namespace SoRR
         /// <inheritdoc cref="Dictionary{TKey,TValue}.EnsureCapacity(int)"/>
         public int EnsureCapacity(int capacity)
         {
-            if (capacity < 0) throw new ArgumentOutOfRangeException(nameof(capacity));
+            Guard.ThrowIfNegative(capacity);
 
             int currentCapacity = _entries?.Length ?? 0;
             if (currentCapacity >= capacity) return currentCapacity;
@@ -432,7 +433,7 @@ namespace SoRR
         /// <inheritdoc cref="Dictionary{TKey,TValue}.TrimExcess(int)"/>
         public void TrimExcess(int capacity)
         {
-            if (capacity < Count) throw new ArgumentOutOfRangeException(nameof(capacity));
+            Guard.ThrowIfLessThan(capacity, Count);
 
             int newSize = StringKeyedDictionaryHelper.GetPrime(capacity);
             Entry[]? oldEntries = _entries;
@@ -547,7 +548,7 @@ namespace SoRR
         private static ulong GenerateSeed()
         {
             Span<byte> bytes = stackalloc byte[sizeof(ulong)];
-            new Random().NextBytes(bytes);
+            RandomNumberGenerator.Fill(bytes);
             return BitConverter.ToUInt64(bytes);
         }
 

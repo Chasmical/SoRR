@@ -49,7 +49,7 @@ namespace SoRR
         /// <exception cref="PathTooLongException">The specified path, file name, or both exceed the system-defined maximum length.</exception>
         public FileSystemAssetManager(string directoryPath)
         {
-            if (directoryPath is null) throw new ArgumentNullException(nameof(directoryPath));
+            Guard.ThrowIfNull(directoryPath);
             DirectoryPath = Path.GetFullPath(directoryPath);
         }
 

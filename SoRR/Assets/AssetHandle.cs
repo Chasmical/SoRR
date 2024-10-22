@@ -22,7 +22,7 @@ namespace SoRR
 
         private object? _value;
         private bool assetLoadError;
-        private ValueSparseCollection<Action<AssetHandle>> _listenersCollection = new();
+        private ValueBag<Action<AssetHandle>> _listeners = new();
 
         /// <summary>
         ///   <para>Gets the asset's current value.</para>
@@ -71,7 +71,7 @@ namespace SoRR
         public void AddListener(Action<AssetHandle> listener)
         {
             if (listener is null) throw new ArgumentNullException(nameof(listener));
-            _listenersCollection.Add(listener);
+            _listeners.Add(listener);
         }
         /// <summary>
         ///   <para>Removes the specified <paramref name="listener"/> from the changed event listeners.</para>
@@ -81,7 +81,7 @@ namespace SoRR
         public void RemoveListener(Action<AssetHandle> listener)
         {
             if (listener is null) throw new ArgumentNullException(nameof(listener));
-            _listenersCollection.Remove(listener);
+            _listeners.Remove(listener);
         }
 
         internal void TriggerReload()
@@ -90,7 +90,7 @@ namespace SoRR
             assetLoadError = false;
             Version++;
 
-            var listeners = _listenersCollection.GetItems();
+            var listeners = _listeners.Span;
             for (int i = 0; i < listeners.Length; i++)
                 listeners[i]?.Invoke(this);
         }

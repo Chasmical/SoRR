@@ -8,9 +8,9 @@ using JetBrains.Annotations;
 namespace SoRR
 {
     /// <summary>
-    ///   <para>Provides a set of extension methods for retrieving custom attributes of .</para>
+    ///   <para>Provides a set of extension methods for retrieving custom attributes and nullability information using reflection.</para>
     /// </summary>
-    public static class MemberInfoExtensions
+    public static class ReflectionExtensions
     {
         /// <summary>
         ///   <para>Retrieves a custom attribute of the specified type that is applied to the specified assembly, and returns a value indicating whether such an attribute is found.</para>

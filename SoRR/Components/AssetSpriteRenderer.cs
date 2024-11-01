@@ -6,7 +6,7 @@ namespace SoRR
     /// <summary>
     ///   <para>Represents a sprite renderer that uses an <see cref="AssetHandle"/> to load and reload sprites.</para>
     /// </summary>
-    public class AssetSpriteRenderer : MonoBehaviour
+    public class AssetSpriteRenderer : InjectableComponent
     {
         /// <summary>
         ///   <para>Gets the <see cref="SpriteRenderer"/> controlled by this asset sprite renderer.</para>
@@ -53,10 +53,6 @@ namespace SoRR
             }
             Renderer.sprite = sprite;
         }
-
-        /// <summary/>
-        public virtual void Awake()
-            => Injector.Inject(this);
 
         /// <summary/>
         public virtual void OnDestroy()
